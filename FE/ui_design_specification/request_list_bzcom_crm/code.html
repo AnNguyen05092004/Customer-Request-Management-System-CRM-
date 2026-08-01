@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Requests - Bzcom CRM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#7b2600",
+                      "on-background": "#191b23",
+                      "tertiary-fixed": "#ffdbcf",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-tint": "#0c56d0",
+                      "on-tertiary": "#ffffff",
+                      "surface-variant": "#e1e2ec",
+                      "primary": "#003d9b",
+                      "background": "#faf8ff",
+                      "on-tertiary-fixed": "#380d00",
+                      "tertiary-fixed-dim": "#ffb59b",
+                      "surface": "#faf8ff",
+                      "tertiary-container": "#a33500",
+                      "on-primary": "#ffffff",
+                      "info-blue": "#00B8D9",
+                      "border-subtle": "#DFE1E6",
+                      "error-red": "#FF5630",
+                      "inverse-on-surface": "#f0f0fb",
+                      "on-tertiary-fixed-variant": "#812800",
+                      "on-secondary-container": "#576377",
+                      "primary-container": "#0052cc",
+                      "on-tertiary-container": "#ffc6b2",
+                      "on-primary-fixed": "#001848",
+                      "secondary-container": "#d4e0f8",
+                      "secondary-fixed-dim": "#bbc7de",
+                      "on-error": "#ffffff",
+                      "surface-container": "#ededf8",
+                      "on-error-container": "#93000a",
+                      "on-secondary": "#ffffff",
+                      "on-secondary-fixed": "#101c2d",
+                      "on-secondary-fixed-variant": "#3b475b",
+                      "surface-bright": "#faf8ff",
+                      "surface-container-high": "#e7e7f2",
+                      "outline-variant": "#c3c6d6",
+                      "inverse-primary": "#b2c5ff",
+                      "success-green": "#36B37E",
+                      "outline": "#737685",
+                      "inverse-surface": "#2e3038",
+                      "warning-orange": "#FFAB00",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "secondary-fixed": "#d7e3fb",
+                      "surface-container-highest": "#e1e2ec",
+                      "secondary": "#535f73",
+                      "primary-fixed": "#dae2ff",
+                      "surface-dim": "#d9d9e4",
+                      "error": "#ba1a1a",
+                      "surface-container-low": "#f3f3fd",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "on-surface": "#191b23",
+                      "on-surface-variant": "#434654",
+                      "surface-gray": "#F4F5F7",
+                      "error-container": "#ffdad6",
+                      "on-primary-container": "#c4d2ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "input-height": "40px",
+                      "card-padding": "20px",
+                      "gutter": "16px",
+                      "container-margin": "24px"
+              },
+              "fontFamily": {
+                      "headline-xl": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "code-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-xl": [
+                              "36px",
+                              {
+                                      "lineHeight": "44px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "code-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+</head>
+<body class="bg-surface-gray text-on-surface font-body-md h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="h-screen w-64 fixed left-0 top-0 border-r border-border-subtle bg-surface flex flex-col h-full py-container-margin z-50">
+<div class="px-container-margin mb-8">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Bzcom</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Enterprise CRM</p>
+</div>
+<div class="flex-1 overflow-y-auto">
+<ul class="space-y-1">
+<!-- Dashboard -->
+<li>
+<a class="flex items-center px-container-margin py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-gray transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]" data-icon="dashboard">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+</li>
+<!-- Requests (Active) -->
+<li>
+<a class="flex items-center px-container-margin py-3 text-primary font-bold border-r-4 border-primary bg-secondary-container transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]" data-icon="support_agent" data-weight="fill" style="font-variation-settings: 'FILL' 1;">support_agent</span>
+<span class="font-body-md text-body-md">Requests</span>
+</a>
+</li>
+<!-- Members -->
+<li>
+<a class="flex items-center px-container-margin py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-gray transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]" data-icon="group">group</span>
+<span class="font-body-md text-body-md">Members</span>
+</a>
+</li>
+<!-- Alerts -->
+<li>
+<a class="flex items-center px-container-margin py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-gray transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]" data-icon="notifications">notifications</span>
+<span class="font-body-md text-body-md">Alerts</span>
+</a>
+</li>
+<!-- Reports -->
+<li>
+<a class="flex items-center px-container-margin py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-gray transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined mr-3 text-[20px]" data-icon="analytics">analytics</span>
+<span class="font-body-md text-body-md">Reports</span>
+</a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 border-b border-border-subtle bg-surface flex items-center justify-between px-gutter z-40 transition-all duration-150">
+<!-- Search Bar (on_left) -->
+<div class="flex-1 max-w-md">
+<div class="relative flex items-center w-full h-input-height rounded border border-border-subtle bg-surface-container-lowest overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors">
+<div class="grid place-items-center h-full w-10 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="peer h-full w-full outline-none text-body-md text-on-surface bg-transparent pr-2" id="globalSearch" placeholder="Search requests, clients, or IDs..." type="text"/>
+</div>
+</div>
+<!-- Trailing Icons -->
+<div class="flex items-center space-x-2">
+<button class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-gray rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="smart_toy">smart_toy</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-gray rounded transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Page Canvas -->
+<main class="flex-1 mt-16 p-container-margin overflow-y-auto bg-surface-gray">
+<div class="max-w-[1400px] mx-auto w-full">
+<!-- Page Header & Actions -->
+<div class="flex items-center justify-between mb-6">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Requests</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Manage and track all incoming client requests.</p>
+</div>
+<div class="flex gap-3">
+<button class="h-input-height px-4 rounded border border-border-subtle bg-surface-container-lowest text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+                            Quick Assign
+                        </button>
+<button class="h-input-height px-4 rounded bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                            Create Request
+                        </button>
+</div>
+</div>
+<!-- Filters & Table Card -->
+<div class="bg-surface-container-lowest rounded-lg border border-border-subtle shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col h-[calc(100vh-160px)]">
+<!-- Filter Bar -->
+<div class="p-4 border-b border-border-subtle flex flex-wrap gap-4 items-center bg-surface-container-lowest rounded-t-lg">
+<!-- Status Filter -->
+<div class="relative w-48">
+<select class="w-full h-input-height pl-3 pr-10 text-body-md border border-border-subtle rounded appearance-none bg-transparent focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-on-surface">
+<option value="">Status: All</option>
+<option value="pending">Pending</option>
+<option value="in_progress">In Progress</option>
+<option value="done">Done</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">arrow_drop_down</span>
+</div>
+</div>
+<!-- Category Filter -->
+<div class="relative w-48">
+<select class="w-full h-input-height pl-3 pr-10 text-body-md border border-border-subtle rounded appearance-none bg-transparent focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-on-surface">
+<option value="">Category: All</option>
+<option value="bug">Bug</option>
+<option value="feature">Feature</option>
+<option value="inquiry">Inquiry</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">arrow_drop_down</span>
+</div>
+</div>
+<!-- Priority Filter -->
+<div class="relative w-48">
+<select class="w-full h-input-height pl-3 pr-10 text-body-md border border-border-subtle rounded appearance-none bg-transparent focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-on-surface">
+<option value="">Priority: All</option>
+<option value="high">High</option>
+<option value="med">Medium</option>
+<option value="low">Low</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">arrow_drop_down</span>
+</div>
+</div>
+<div class="flex-grow"></div>
+<!-- Actions -->
+<button class="p-2 text-on-surface-variant hover:text-on-surface rounded border border-transparent hover:bg-surface-gray transition-colors" title="Export">
+<span class="material-symbols-outlined text-[20px]">download</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-on-surface rounded border border-transparent hover:bg-surface-gray transition-colors" title="Filter Settings">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+</button>
+</div>
+<!-- Table Area -->
+<div class="flex-1 overflow-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-lowest z-10 shadow-[0_1px_0_#DFE1E6]">
+<tr>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant uppercase whitespace-nowrap w-24">ID</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant uppercase whitespace-nowrap">Title</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant uppercase whitespace-nowrap w-32">Category</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant uppercase whitespace-nowrap w-32">Priority</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant uppercase whitespace-nowrap w-40">Status</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant uppercase whitespace-nowrap w-48">Client</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant uppercase whitespace-nowrap w-48">Assigned Dev</th>
+<th class="py-3 px-4 w-12"></th> <!-- Actions -->
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-border-subtle">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-gray transition-colors group cursor-pointer">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant">REQ-8021</td>
+<td class="py-3 px-4 font-semibold text-primary">API Endpoint Timeout Issue</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-md font-label-md bg-[#FFEEEE] text-[#B00020]">Bug</span>
+</td>
+<td class="py-3 px-4">
+<span class="flex items-center gap-1 text-error-red"><span class="material-symbols-outlined text-[16px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">keyboard_double_arrow_up</span>High</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-warning-orange"></div>
+<span>In Progress</span>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Acme Corp</td>
+<td class="py-3 px-4 flex items-center gap-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-border-subtle" data-alt="A small circular avatar photo of a professional female developer with short dark hair, wearing glasses, lit by soft studio lighting against a neutral grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAH2rukPVERk3b-NGWJ5KDvSQUuGCe7xtrpP1xuMpT228XK3Y5JqnS87OSVvUjTU0p3JGm-17pCCkyRO7XGHAwwmiXfvBpN7XeQOCqdYcO-SsOUfnZhkuqGLlyUwXNp0IdCbCKhMJTC9Bkib1YmTCXfDzX7Rs6pCOAO-Hdl-UlBfqwJqqOosnA0RGkw3amf2yDKQnbns0dH_Y5hFfaIG9x18PWQtIOn5XMDjNV2UokT6e87j7F65EcNkw"/>
+                                        Sarah J.
+                                    </td>
+<td class="py-3 px-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-gray transition-colors group cursor-pointer bg-surface-container-lowest">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant">REQ-8022</td>
+<td class="py-3 px-4 font-semibold text-primary">New Dashboard Widget: Revenue</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-md font-label-md bg-[#E3F2FD] text-[#0D47A1]">Feature</span>
+</td>
+<td class="py-3 px-4">
+<span class="flex items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">drag_handle</span>Med</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<span>Pending</span>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Globex Inc.</td>
+<td class="py-3 px-4 text-on-surface-variant italic text-code-sm">Unassigned</td>
+<td class="py-3 px-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-gray transition-colors group cursor-pointer">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant">REQ-8023</td>
+<td class="py-3 px-4 font-semibold text-primary">Billing Export Format Question</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-md font-label-md bg-[#F3E5F5] text-[#4A148C]">Inquiry</span>
+</td>
+<td class="py-3 px-4">
+<span class="flex items-center gap-1 text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>Low</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-success-green"></div>
+<span>Done</span>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Initech LLC</td>
+<td class="py-3 px-4 flex items-center gap-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-border-subtle" data-alt="A small circular avatar photo of a professional male support engineer with a beard, wearing a headset, lit by cool blue screen light in a modern office." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4c4hG_oMbwMhihkW9dQ9we7sGHoeoeOylboLgaN8P8msJyOW8UvgtRzyS1xtc36ci77_kpRt2QiyhE6MfwTLuC1to_rq2on8G-1y1ftoq5jKX7L1TzrDFdgSxlpZ9YcxBkHRjI_nc3nVySFXC6r0nwKNxj9-Iyrqnb3kn6jD3KHpkOA5hz21soiT8z7JtOW4qFEAX8hAjx6xDd-vwxCenlsm637Pp68CIehGs-SgXcUyWeSFQwedoQQ"/>
+                                        Michael B.
+                                    </td>
+<td class="py-3 px-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-gray transition-colors group cursor-pointer bg-surface-container-lowest">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant">REQ-8024</td>
+<td class="py-3 px-4 font-semibold text-primary">User Role Sync Failing</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-label-md font-label-md bg-[#FFEEEE] text-[#B00020]">Bug</span>
+</td>
+<td class="py-3 px-4">
+<span class="flex items-center gap-1 text-error-red"><span class="material-symbols-outlined text-[16px]" data-weight="fill" style="font-variation-settings: 'FILL' 1;">keyboard_double_arrow_up</span>High</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<span>Pending</span>
+</div>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Soylent Corp</td>
+<td class="py-3 px-4 flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-[10px]">DB</div>
+                                        David B.
+                                    </td>
+<td class="py-3 px-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination (Simplified) -->
+<div class="p-3 border-t border-border-subtle flex justify-between items-center bg-surface-container-lowest rounded-b-lg">
+<span class="font-body-md text-body-md text-on-surface-variant">Showing 1-4 of 124</span>
+<div class="flex space-x-1">
+<button class="p-1 rounded text-outline-variant cursor-not-allowed" disabled=""><span class="material-symbols-outlined text-[20px]">chevron_left</span></button>
+<button class="p-1 rounded text-on-surface-variant hover:bg-surface-gray hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

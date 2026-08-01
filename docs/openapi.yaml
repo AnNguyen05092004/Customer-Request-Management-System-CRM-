@@ -1,0 +1,684 @@
+openapi: 3.0.3
+info:
+  title: Bzcom CRM — Customer Request Management System API
+  description: >
+    REST API quản lý yêu cầu khách hàng (bug / feature / inquiry) cho Bzcom.
+    Mọi response dùng envelope thống nhất `{ status, message, data }`.
+    Xác thực bằng JWT Bearer token (trừ login, refresh, logout và đăng ký CLIENT).
+  version: 1.0.0
+  contact:
+    name: KITS Hanoi OJT 2026 — Bzcom Developer Team
+
+servers:
+  - url: http://localhost:8080
+    description: Local (Docker Compose)
+
+tags:
+  - name: Auth
+    description: Đăng nhập / đăng xuất, cấp JWT
+  - name: Member
+    description: Quản lý người dùng
+  - name: Request
+    description: Yêu cầu khách hàng — CRUD, filter, gán, trạng thái, thống kê
+  - name: Alert
+    description: Thông báo tự sinh
+  - name: LLM
+    description: Tính năng AI (phân loại / gợi ý priority / tóm tắt)
+
+paths:
+  # ─────────────────────────── AUTH ───────────────────────────
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Đăng nhập, cấp JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/TokenResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Đăng xuất phiên hiện tại (thu hồi refresh token; không gửi Bearer access token)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshTokenRequest' }
+      responses:
+        '200':
+          description: Đăng xuất thành công
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Làm mới access token và xoay vòng refresh token (không gửi Bearer access token)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshTokenRequest' }
+      responses:
+        '200':
+          description: Token mới; refresh token cũ bị thu hồi
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/TokenResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ─────────────────────────── MEMBER ───────────────────────────
+  /api/members:
+    post:
+      tags: [Member]
+      summary: Đăng ký CLIENT công khai (role luôn là CLIENT)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MemberCreateRequest' }
+      responses:
+        '201':
+          description: Tạo member thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/MemberResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    get:
+      tags: [Member]
+      summary: Lấy tất cả member (ADMIN only)
+      responses:
+        '200':
+          description: Danh sách member
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/MemberResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/members/{id}:
+    get:
+      tags: [Member]
+      summary: Lấy chi tiết member (ADMIN hoặc chính member đó)
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Chi tiết member
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/MemberResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ─────────────────────────── REQUEST ───────────────────────────
+  /api/requests:
+    post:
+      tags: [Request]
+      summary: Tạo yêu cầu (CLIENT only). HIGH → tự sinh alert cho ADMIN.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RequestCreateRequest' }
+      responses:
+        '201':
+          description: Tạo request thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/RequestResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    get:
+      tags: [Request]
+      summary: Danh sách request (phân trang / sort / filter tổ hợp; phạm vi theo role)
+      description: >
+        ADMIN thấy tất cả; CLIENT chỉ thấy request mình tạo;
+        DEVELOPER chỉ thấy request được gán cho mình.
+      parameters:
+        - { name: page,     in: query, schema: { type: integer, default: 0 } }
+        - { name: size,     in: query, schema: { type: integer, default: 10 } }
+        - { name: sort,     in: query, schema: { type: string, example: 'createdAt,desc' } }
+        - { name: status,   in: query, schema: { $ref: '#/components/schemas/RequestStatus' } }
+        - { name: category, in: query, schema: { $ref: '#/components/schemas/Category' } }
+        - { name: priority, in: query, schema: { $ref: '#/components/schemas/Priority' } }
+        - { name: keyword,  in: query, schema: { type: string }, description: 'tìm trong title/description' }
+      responses:
+        '200':
+          description: Trang kết quả
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/PageRequestResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/requests/{id}:
+    get:
+      tags: [Request]
+      summary: Chi tiết một request (kiểm quyền xem theo role)
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Chi tiết request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/RequestResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/requests/{id}/assign:
+    patch:
+      tags: [Request]
+      summary: Gán developer (ADMIN only). auto=true → thuật toán tự chọn.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssignRequest' }
+      responses:
+        '200':
+          description: Gán thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/RequestResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422':
+          description: Không có DEVELOPER khả dụng để auto-assign
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+
+  /api/requests/{id}/status:
+    patch:
+      tags: [Request]
+      summary: Cập nhật trạng thái; request phải được gán developer và transition phải hợp lệ → 409
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StatusUpdateRequest' }
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/RequestResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Request chưa được gán developer, transition không hợp lệ hoặc optimistic lock conflict
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+              example: { status: 409, message: 'Invalid status transition: DONE -> IN_PROGRESS', data: null }
+
+  /api/requests/{id}/history:
+    get:
+      tags: [Request]
+      summary: Lịch sử thay đổi trạng thái của request
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Danh sách history
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/HistoryResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/requests/stats:
+    get:
+      tags: [Request]
+      summary: Thống kê (ADMIN only) — tổng, completion rate, theo category, theo developer
+      responses:
+        '200':
+          description: Thống kê
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/StatsResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ─────────────────────────── ALERT ───────────────────────────
+  /api/alerts:
+    get:
+      tags: [Alert]
+      summary: Lấy danh sách alert của bản thân
+      parameters:
+        - { name: isRead, in: query, schema: { type: boolean }, description: 'lọc theo đã đọc' }
+      responses:
+        '200':
+          description: Danh sách alert
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: '#/components/schemas/AlertResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/alerts/{id}/read:
+    patch:
+      tags: [Alert]
+      summary: Đánh dấu alert đã đọc (chỉ chủ sở hữu)
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Đã đánh dấu đọc
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ─────────────────────────── LLM ───────────────────────────
+  /api/requests/classify:
+    post:
+      tags: [LLM]
+      summary: Tự phân loại category từ description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description]
+              properties:
+                description: { type: string, example: 'When I click login, page shows 500 error' }
+      responses:
+        '200':
+          description: Kết quả phân loại
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data: { $ref: '#/components/schemas/ClassifyResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /api/requests/suggest-priority:
+    post:
+      tags: [LLM]
+      summary: Gợi ý priority từ description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [description]
+              properties:
+                description: { type: string }
+      responses:
+        '200':
+          description: Priority gợi ý
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          priority: { $ref: '#/components/schemas/Priority' }
+                          confidence: { type: number, format: float, example: 0.88 }
+                          reason: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+  /api/requests/{id}/summary:
+    get:
+      tags: [LLM]
+      summary: Tóm tắt 1-2 dòng cho một request
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Tóm tắt
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          summary: { type: string, example: 'Người dùng gặp lỗi 500 khi đăng nhập; mức độ ưu tiên cao.' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+  responses:
+    BadRequest:
+      description: Dữ liệu không hợp lệ (validation)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiResponse' }
+          example: { status: 400, message: 'title: must not be blank', data: null }
+    Unauthorized:
+      description: Chưa đăng nhập hoặc token không hợp lệ
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiResponse' }
+          example: { status: 401, message: 'Unauthorized', data: null }
+    Forbidden:
+      description: Không đủ quyền
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiResponse' }
+          example: { status: 403, message: 'Forbidden', data: null }
+    NotFound:
+      description: Không tìm thấy resource
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiResponse' }
+          example: { status: 404, message: 'Request not found: 999', data: null }
+    Conflict:
+      description: Xung đột (email trùng / transition sai / optimistic lock)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ApiResponse' }
+          example: { status: 409, message: 'Email already exists', data: null }
+
+  schemas:
+    ApiResponse:
+      type: object
+      required: [status, message, data]
+      properties:
+        status:  { type: integer, example: 200 }
+        message: { type: string, example: success }
+        data:    { nullable: true }
+
+    RequestStatus:
+      type: string
+      enum: [PENDING, IN_PROGRESS, DONE]
+    Category:
+      type: string
+      enum: [BUG, FEATURE, INQUIRY]
+    Priority:
+      type: string
+      enum: [HIGH, MEDIUM, LOW]
+    Role:
+      type: string
+      enum: [ADMIN, DEVELOPER, CLIENT]
+    AlertType:
+      type: string
+      enum: [ASSIGNED, STATUS_CHANGED, HIGH_PRIORITY_REGISTERED]
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:    { type: string, format: email, example: admin@bzcom.com }
+        password: { type: string, example: '1234' }
+
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string, minLength: 32, description: 'opaque refresh token đã nhận khi login/refresh' }
+
+    TokenResponse:
+      type: object
+      required: [accessToken, refreshToken, tokenType, role]
+      properties:
+        accessToken:  { type: string }
+        refreshToken: { type: string }
+        tokenType:    { type: string, example: Bearer }
+        role:         { $ref: '#/components/schemas/Role' }
+
+    MemberCreateRequest:
+      type: object
+      description: 'Public self-registration. Server luôn gán role CLIENT. Field role không thuộc contract; gửi field lạ (kể cả role) bị 400.'
+      additionalProperties: false
+      required: [email, password, name]
+      properties:
+        email:    { type: string, format: email, maxLength: 255 }
+        password: { type: string, minLength: 4, maxLength: 72 }
+        name:     { type: string, minLength: 1, maxLength: 100 }
+
+    MemberResponse:
+      type: object
+      description: Không bao giờ chứa password
+      properties:
+        id:    { type: integer, format: int64 }
+        email: { type: string }
+        name:  { type: string }
+        role:  { $ref: '#/components/schemas/Role' }
+        createdAt: { type: string, format: date-time }
+
+    RequestCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [title, category, priority]
+      properties:
+        title:       { type: string, minLength: 1, maxLength: 200, example: 'Login fails' }
+        description: { type: string, maxLength: 4000, example: 'When I click login, page shows 500 error' }
+        category:    { $ref: '#/components/schemas/Category' }
+        priority:    { $ref: '#/components/schemas/Priority' }
+
+    RequestResponse:
+      type: object
+      properties:
+        id:          { type: integer, format: int64 }
+        title:       { type: string }
+        description: { type: string }
+        category:    { $ref: '#/components/schemas/Category' }
+        priority:    { $ref: '#/components/schemas/Priority' }
+        status:      { $ref: '#/components/schemas/RequestStatus' }
+        clientId:    { type: integer, format: int64 }
+        assignedDeveloperId: { type: integer, format: int64, nullable: true }
+        version:     { type: integer, minimum: 0, description: 'Gửi lại ở mọi PATCH để phát hiện stale update' }
+        createdAt:   { type: string, format: date-time }
+        updatedAt:   { type: string, format: date-time }
+
+    PageRequestResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items: { $ref: '#/components/schemas/RequestResponse' }
+        page:          { type: integer, example: 0 }
+        size:          { type: integer, example: 10 }
+        totalElements: { type: integer, example: 42 }
+        totalPages:    { type: integer, example: 5 }
+
+    AssignRequest:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [auto, expectedVersion]
+          properties:
+            auto: { type: boolean, enum: [true] }
+            expectedVersion: { type: integer, minimum: 0, example: 0 }
+        - type: object
+          additionalProperties: false
+          required: [auto, developerId, expectedVersion]
+          properties:
+            auto: { type: boolean, enum: [false] }
+            developerId: { type: integer, format: int64, minimum: 1 }
+            expectedVersion: { type: integer, minimum: 0, example: 0 }
+
+    StatusUpdateRequest:
+      type: object
+      required: [status, expectedVersion]
+      properties:
+        status: { $ref: '#/components/schemas/RequestStatus' }
+        memo:   { type: string, example: 'start working' }
+        expectedVersion: { type: integer, minimum: 0, example: 0 }
+
+    HistoryResponse:
+      type: object
+      properties:
+        id:         { type: integer, format: int64 }
+        requestId:  { type: integer, format: int64 }
+        changedBy:  { type: integer, format: int64 }
+        fromStatus:
+          allOf: [{ $ref: '#/components/schemas/RequestStatus' }]
+          nullable: true
+        toStatus:
+          allOf: [{ $ref: '#/components/schemas/RequestStatus' }]
+          nullable: true
+        memo:       { type: string }
+        changedAt:  { type: string, format: date-time }
+
+    AlertResponse:
+      type: object
+      properties:
+        id:        { type: integer, format: int64 }
+        requestId: { type: integer, format: int64 }
+        alertType: { $ref: '#/components/schemas/AlertType' }
+        message:   { type: string }
+        isRead:    { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    StatsResponse:
+      type: object
+      properties:
+        total:          { type: integer, example: 42 }
+        completed:      { type: integer, example: 18 }
+        completionRate: { type: number, format: float, example: 0.43 }
+        byCategory:
+          type: object
+          additionalProperties: { type: integer }
+          example: { BUG: 20, FEATURE: 15, INQUIRY: 7 }
+        byDeveloper:
+          type: array
+          items:
+            type: object
+            properties:
+              developerId:   { type: integer, format: int64 }
+              developerName: { type: string }
+              assignedCount: { type: integer }
+              doneCount:     { type: integer }
+
+    ClassifyResult:
+      type: object
+      properties:
+        category:   { $ref: '#/components/schemas/Category' }
+        confidence: { type: number, format: float, example: 0.94 }
+        reason:     { type: string, example: 'mentions error on action' }
+
+security:
+  - bearerAuth: []

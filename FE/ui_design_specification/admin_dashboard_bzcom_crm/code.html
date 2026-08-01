@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bzcom CRM - Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary": "#7b2600",
+                      "on-background": "#191b23",
+                      "tertiary-fixed": "#ffdbcf",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-tint": "#0c56d0",
+                      "on-tertiary": "#ffffff",
+                      "surface-variant": "#e1e2ec",
+                      "primary": "#003d9b",
+                      "background": "#faf8ff",
+                      "on-tertiary-fixed": "#380d00",
+                      "tertiary-fixed-dim": "#ffb59b",
+                      "surface": "#faf8ff",
+                      "tertiary-container": "#a33500",
+                      "on-primary": "#ffffff",
+                      "info-blue": "#00B8D9",
+                      "border-subtle": "#DFE1E6",
+                      "error-red": "#FF5630",
+                      "inverse-on-surface": "#f0f0fb",
+                      "on-tertiary-fixed-variant": "#812800",
+                      "on-secondary-container": "#576377",
+                      "primary-container": "#0052cc",
+                      "on-tertiary-container": "#ffc6b2",
+                      "on-primary-fixed": "#001848",
+                      "secondary-container": "#d4e0f8",
+                      "secondary-fixed-dim": "#bbc7de",
+                      "on-error": "#ffffff",
+                      "surface-container": "#ededf8",
+                      "on-error-container": "#93000a",
+                      "on-secondary": "#ffffff",
+                      "on-secondary-fixed": "#101c2d",
+                      "on-secondary-fixed-variant": "#3b475b",
+                      "surface-bright": "#faf8ff",
+                      "surface-container-high": "#e7e7f2",
+                      "outline-variant": "#c3c6d6",
+                      "inverse-primary": "#b2c5ff",
+                      "success-green": "#36B37E",
+                      "outline": "#737685",
+                      "inverse-surface": "#2e3038",
+                      "warning-orange": "#FFAB00",
+                      "on-primary-fixed-variant": "#0040a2",
+                      "secondary-fixed": "#d7e3fb",
+                      "surface-container-highest": "#e1e2ec",
+                      "secondary": "#535f73",
+                      "primary-fixed": "#dae2ff",
+                      "surface-dim": "#d9d9e4",
+                      "error": "#ba1a1a",
+                      "surface-container-low": "#f3f3fd",
+                      "primary-fixed-dim": "#b2c5ff",
+                      "on-surface": "#191b23",
+                      "on-surface-variant": "#434654",
+                      "surface-gray": "#F4F5F7",
+                      "error-container": "#ffdad6",
+                      "on-primary-container": "#c4d2ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "input-height": "40px",
+                      "card-padding": "20px",
+                      "gutter": "16px",
+                      "container-margin": "24px"
+              },
+              "fontFamily": {
+                      "headline-xl": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "code-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-xl": [
+                              "36px",
+                              {
+                                      "lineHeight": "44px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "code-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .chart-bar {
+            transition: height 0.5s ease-in-out, opacity 0.3s;
+        }
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body class="bg-surface-gray text-on-surface font-body-md min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex h-screen w-64 fixed left-0 top-0 border-r border-border-subtle bg-surface flex-col py-container-margin z-50">
+<div class="px-gutter mb-8 flex items-center space-x-3">
+<div class="w-10 h-10 rounded bg-primary flex items-center justify-center text-on-primary font-bold text-xl">B</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Bzcom</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Enterprise CRM</p>
+</div>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<!-- Active Tab: Dashboard -->
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-primary font-bold border-l-4 border-primary bg-secondary-container transition-colors duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-gray transition-colors duration-200 ease-in-out border-l-4 border-transparent" href="#">
+<span class="material-symbols-outlined">support_agent</span>
+<span>Requests</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-gray transition-colors duration-200 ease-in-out border-l-4 border-transparent" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Members</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-gray transition-colors duration-200 ease-in-out border-l-4 border-transparent" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span>Alerts</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-gray transition-colors duration-200 ease-in-out border-l-4 border-transparent" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Reports</span>
+</a>
+</nav>
+<div class="px-gutter mt-auto">
+<div class="flex items-center space-x-3 p-3 bg-surface-container rounded-lg">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A small, professional headshot of an administrative user for an enterprise CRM dashboard. The portrait is brightly lit, corporate style, against a neutral light grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfqhYiYaExSihjqIjiTMSSS1cKw5VGK6x58DnDNh_Yy3eJiik4XHBqEvdH_hn8iAKRw1MfFQ-uPTZBHNF7vcLhdVBdqszp-aQpHX_PzKJ27ka77imPmM0K8-IxbAEH-tjw3hNKnVfX25MjoyD4tbSrB0ClF8_7RT4T6n4k7pIIyYqnSpooAhtIEidVQ1d_SXkCb-2pY3GaXotHbKN5SLTEm8zsphF5EM-_EOz1-qvmgfpW2C1FVT0aAg"/>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">Admin User</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="hidden md:flex fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-surface border-b border-border-subtle items-center justify-between px-gutter z-40 transition-all duration-150">
+<div class="flex items-center flex-1">
+<h2 class="font-headline-md text-headline-md font-bold text-primary mr-6">Bzcom CRM</h2>
+<!-- Search on left -->
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full pl-9 pr-3 h-input-height bg-surface-container rounded-md border border-border-subtle text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow placeholder:text-outline-variant" placeholder="Search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-gray transition-colors duration-150 relative">
+<span class="material-symbols-outlined">smart_toy</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-gray transition-colors duration-150">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="pt-16 md:pl-64 min-h-screen">
+<div class="p-container-margin max-w-[1400px] mx-auto space-y-container-margin">
+<!-- Header -->
+<div class="flex items-center justify-between">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-background">Overview</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Real-time status of CRM requests.</p>
+</div>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-md font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm">
+                    Generate Report
+                </button>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Requests</span>
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+</div>
+</div>
+<div class="flex items-baseline space-x-2">
+<span class="font-headline-xl text-headline-xl text-on-background">1,248</span>
+<span class="font-body-md text-body-md text-success-green flex items-center">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span> 12%
+                        </span>
+</div>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Pending</span>
+<div class="w-8 h-8 rounded-full bg-error-container flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[18px]">hourglass_empty</span>
+</div>
+</div>
+<div class="flex items-baseline space-x-2">
+<span class="font-headline-xl text-headline-xl text-on-background">342</span>
+<span class="font-body-md text-body-md text-error-red flex items-center">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span> 5%
+                        </span>
+</div>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">In Progress</span>
+<div class="w-8 h-8 rounded-full bg-[#E6F4FF] flex items-center justify-center text-info-blue">
+<span class="material-symbols-outlined text-[18px]">autorenew</span>
+</div>
+</div>
+<div class="flex items-baseline space-x-2">
+<span class="font-headline-xl text-headline-xl text-on-background">512</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Active</span>
+</div>
+</div>
+<!-- Stat Card 4 -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+<div class="flex items-center justify-between mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Done</span>
+<div class="w-8 h-8 rounded-full bg-[#E3FCEF] flex items-center justify-center text-success-green">
+<span class="material-symbols-outlined text-[18px]">task_alt</span>
+</div>
+</div>
+<div class="flex items-baseline space-x-2">
+<span class="font-headline-xl text-headline-xl text-on-background">394</span>
+<span class="font-body-md text-body-md text-success-green flex items-center">
+                            This week
+                        </span>
+</div>
+</div>
+</div>
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Bar Chart: Requests by Developer (Takes up 2 columns) -->
+<div class="lg:col-span-2 bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col">
+<div class="flex items-center justify-between mb-6 border-b border-border-subtle pb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">Requests by Developer</h3>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="flex-1 relative h-64 flex items-end justify-between px-4 pb-8 pt-4 gap-2">
+<!-- Y-axis labels -->
+<div class="absolute left-0 top-4 bottom-8 flex flex-col justify-between text-outline-variant font-code-sm text-code-sm w-8 text-right pr-2">
+<span>150</span>
+<span>100</span>
+<span>50</span>
+<span>0</span>
+</div>
+<!-- Grid lines -->
+<div class="absolute left-8 right-4 top-4 bottom-8 flex flex-col justify-between pointer-events-none">
+<div class="w-full border-t border-border-subtle border-dashed"></div>
+<div class="w-full border-t border-border-subtle border-dashed"></div>
+<div class="w-full border-t border-border-subtle border-dashed"></div>
+<div class="w-full border-t border-border-subtle"></div>
+</div>
+<!-- Bars -->
+<div class="relative z-10 w-full flex justify-between items-end h-full ml-8">
+<div class="flex flex-col items-center group w-full max-w-[40px]">
+<div class="chart-bar w-full bg-primary rounded-t-sm h-[80%]" title="Dev A: 120"></div>
+<span class="font-label-md text-label-md text-on-surface-variant mt-2 absolute -bottom-6">Dev A</span>
+</div>
+<div class="flex flex-col items-center group w-full max-w-[40px]">
+<div class="chart-bar w-full bg-primary rounded-t-sm h-[45%]" title="Dev B: 68"></div>
+<span class="font-label-md text-label-md text-on-surface-variant mt-2 absolute -bottom-6">Dev B</span>
+</div>
+<div class="flex flex-col items-center group w-full max-w-[40px]">
+<div class="chart-bar w-full bg-primary rounded-t-sm h-[95%]" title="Dev C: 142"></div>
+<span class="font-label-md text-label-md text-on-surface-variant mt-2 absolute -bottom-6">Dev C</span>
+</div>
+<div class="flex flex-col items-center group w-full max-w-[40px]">
+<div class="chart-bar w-full bg-primary rounded-t-sm h-[60%]" title="Dev D: 90"></div>
+<span class="font-label-md text-label-md text-on-surface-variant mt-2 absolute -bottom-6">Dev D</span>
+</div>
+<div class="flex flex-col items-center group w-full max-w-[40px]">
+<div class="chart-bar w-full bg-primary rounded-t-sm h-[30%]" title="Dev E: 45"></div>
+<span class="font-label-md text-label-md text-on-surface-variant mt-2 absolute -bottom-6">Dev E</span>
+</div>
+<div class="flex flex-col items-center group w-full max-w-[40px]">
+<div class="chart-bar w-full bg-primary rounded-t-sm h-[75%]" title="Dev F: 112"></div>
+<span class="font-label-md text-label-md text-on-surface-variant mt-2 absolute -bottom-6">Dev F</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Pie Chart/List: Requests by Category -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl p-card-padding shadow-[0_2px_4px_rgba(0,0,0,0.02)] flex flex-col">
+<div class="flex items-center justify-between mb-6 border-b border-border-subtle pb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface">By Category</h3>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="flex-1 flex flex-col justify-center items-center">
+<!-- Simulated Donut Chart using CSS -->
+<div class="relative w-48 h-48 rounded-full flex items-center justify-center mb-6" style="background: conic-gradient(
+                            #003d9b 0% 45%,    /* Primary - Bug */
+                            #FFAB00 45% 75%,   /* Warning - Feature */
+                            #00B8D9 75% 100%   /* Info - Inquiry */
+                        );">
+<div class="w-32 h-32 bg-surface-container-lowest rounded-full flex flex-col items-center justify-center shadow-inner">
+<span class="font-headline-lg text-headline-lg text-on-background">1,248</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Total</span>
+</div>
+</div>
+<!-- Legend -->
+<div class="w-full space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="font-body-md text-body-md text-on-surface">Bug</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">45%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<div class="w-3 h-3 rounded-full bg-warning-orange"></div>
+<span class="font-body-md text-body-md text-on-surface">Feature</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">30%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<div class="w-3 h-3 rounded-full bg-info-blue"></div>
+<span class="font-body-md text-body-md text-on-surface">Inquiry</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">25%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Table Section -->
+<div class="bg-surface-container-lowest border border-border-subtle rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.02)] overflow-hidden">
+<div class="p-card-padding border-b border-border-subtle flex items-center justify-between bg-surface-bright">
+<h3 class="font-headline-md text-headline-md text-on-surface">Recent High Priority Requests</h3>
+<button class="font-label-md text-label-md text-primary hover:text-primary-container transition-colors">View All</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-gray border-b border-border-subtle">
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider sticky top-0">ID</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider sticky top-0">Title</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider sticky top-0">Client</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider sticky top-0">Date</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider sticky top-0 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-border-subtle">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-gray transition-colors group">
+<td class="py-4 px-6 font-code-sm text-code-sm text-outline">#REQ-9042</td>
+<td class="py-4 px-6 font-semibold">API Rate Limit Exceeded</td>
+<td class="py-4 px-6">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded bg-tertiary-container text-on-tertiary flex items-center justify-center text-xs font-bold">A</div>
+<span>Acme Corp</span>
+</div>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">Oct 24, 2023</td>
+<td class="py-4 px-6 text-right">
+<button class="text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-gray transition-colors group">
+<td class="py-4 px-6 font-code-sm text-code-sm text-outline">#REQ-9038</td>
+<td class="py-4 px-6 font-semibold">Data Export Failure in Dashboard</td>
+<td class="py-4 px-6">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded bg-info-blue text-white flex items-center justify-center text-xs font-bold">G</div>
+<span>Globex Inc</span>
+</div>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">Oct 24, 2023</td>
+<td class="py-4 px-6 text-right">
+<button class="text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-gray transition-colors group">
+<td class="py-4 px-6 font-code-sm text-code-sm text-outline">#REQ-9015</td>
+<td class="py-4 px-6 font-semibold">SSO Integration Timeout</td>
+<td class="py-4 px-6">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded bg-secondary text-white flex items-center justify-center text-xs font-bold">I</div>
+<span>Initech</span>
+</div>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">Oct 23, 2023</td>
+<td class="py-4 px-6 text-right">
+<button class="text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-gray transition-colors group">
+<td class="py-4 px-6 font-code-sm text-code-sm text-outline">#REQ-8992</td>
+<td class="py-4 px-6 font-semibold">Missing User Permissions</td>
+<td class="py-4 px-6">
+<div class="flex items-center space-x-2">
+<div class="w-6 h-6 rounded bg-primary text-white flex items-center justify-center text-xs font-bold">S</div>
+<span>Soylent Corp</span>
+</div>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">Oct 22, 2023</td>
+<td class="py-4 px-6 text-right">
+<button class="text-outline hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body></html>
