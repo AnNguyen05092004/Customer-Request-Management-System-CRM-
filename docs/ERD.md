@@ -14,7 +14,7 @@
 5. [Index & ràng buộc](#5-index--ràng-buộc)
 6. [File DBML (dán vào dbdiagram.io)](#6-file-dbml-dán-vào-dbdiagramio)
 7. [Flyway migration (V1__init.sql)](#7-flyway-migration-v1__initsql)
-8. [Seed data (V2__seed.sql)](#8-seed-data-v2__seedsql)
+8. [Demo seed (V2__seed_demo.sql)](#8-demo-seed-v2__seed_demosql)
 
 ---
 
@@ -38,8 +38,8 @@ erDiagram
         varchar password "BCrypt hash"
         varchar name
         varchar role "ADMIN/DEVELOPER/CLIENT"
-        timestamp last_completed_at "tie-break auto-assign"
-        timestamp created_at
+        timestamptz last_completed_at "tie-break auto-assign"
+        timestamptz created_at
     }
     requests {
         bigint id PK
@@ -51,8 +51,8 @@ erDiagram
         bigint client_id FK
         bigint assigned_developer_id FK "nullable"
         int version "optimistic lock"
-        timestamp created_at
-        timestamp updated_at
+        timestamptz created_at
+        timestamptz updated_at
     }
     request_histories {
         bigint id PK
@@ -60,7 +60,7 @@ erDiagram
         bigint changed_by FK
         varchar from_status "nullable"
         varchar to_status "nullable"
-        timestamp changed_at
+        timestamptz changed_at
         varchar memo
     }
     alerts {
@@ -70,15 +70,15 @@ erDiagram
         varchar alert_type "ASSIGNED/STATUS_CHANGED/HIGH_PRIORITY_REGISTERED"
         varchar message
         boolean is_read "default false"
-        timestamp created_at
+        timestamptz created_at
     }
     refresh_tokens {
         uuid id PK
         bigint member_id FK
         varchar token_hash UK
-        timestamp expires_at
-        timestamp revoked_at "nullable"
-        timestamp created_at
+        timestamptz expires_at
+        timestamptz revoked_at "nullable"
+        timestamptz created_at
     }
 ```
 
@@ -92,8 +92,8 @@ erDiagram
 | password | varchar(255) | NOT NULL | **BCrypt hash** — không bao giờ plaintext |
 | name | varchar(100) | NOT NULL | |
 | role | varchar(20) | NOT NULL | `ADMIN` / `DEVELOPER` / `CLIENT` |
-| last_completed_at | timestamp | NULL | mốc hoàn thành gần nhất — **tie-break** auto-assign |
-| created_at | timestamp | NOT NULL | JPA Auditing |
+| last_completed_at | timestamptz | NULL | mốc hoàn thành gần nhất — **tie-break** auto-assign |
+| created_at | timestamptz | NOT NULL | UTC instant, JPA Auditing |
 
 ### `requests` — yêu cầu khách hàng
 | Cột | Kiểu | Ràng buộc | Ghi chú |
@@ -107,8 +107,8 @@ erDiagram
 | client_id | bigint | FK → members.id, NOT NULL | người tạo (CLIENT) |
 | assigned_developer_id | bigint | FK → members.id, NULL | dev được gán (ban đầu null) |
 | version | int | NOT NULL, default 0 | **optimistic lock** (`@Version`) |
-| created_at | timestamp | NOT NULL | JPA Auditing |
-| updated_at | timestamp | NOT NULL | JPA Auditing |
+| created_at | timestamptz | NOT NULL | UTC instant, JPA Auditing |
+| updated_at | timestamptz | NOT NULL | UTC instant, JPA Auditing |
 
 ### `request_histories` — lịch sử thay đổi (bất biến, append-only)
 | Cột | Kiểu | Ràng buộc | Ghi chú |
@@ -118,7 +118,7 @@ erDiagram
 | changed_by | bigint | FK → members.id, NOT NULL | ai gây ra thay đổi |
 | from_status | varchar(20) | NULL | null khi hành động là "gán" (status không đổi) |
 | to_status | varchar(20) | NULL | null khi chỉ gán, không đổi status |
-| changed_at | timestamp | NOT NULL | |
+| changed_at | timestamptz | NOT NULL | UTC instant |
 | memo | varchar(255) | | mô tả (vd "auto-assigned to Dev One") |
 
 ### `alerts` — thông báo
@@ -130,7 +130,7 @@ erDiagram
 | alert_type | varchar(30) | NOT NULL | `ASSIGNED` / `STATUS_CHANGED` / `HIGH_PRIORITY_REGISTERED` |
 | message | varchar(255) | | nội dung hiển thị |
 | is_read | boolean | NOT NULL, default false | |
-| created_at | timestamp | NOT NULL | |
+| created_at | timestamptz | NOT NULL | UTC instant |
 
 ### `refresh_tokens` — phiên đăng nhập có thể thu hồi
 | Cột | Kiểu | Ràng buộc | Ghi chú |
@@ -138,9 +138,9 @@ erDiagram
 | id | uuid | PK | định danh phiên/token |
 | member_id | bigint | FK → members.id, NOT NULL | chủ sở hữu token |
 | token_hash | varchar(64) | UNIQUE, NOT NULL | SHA-256 của **opaque refresh token**; không lưu raw token. Revocation phải là update nguyên tử có điều kiện `revoked_at IS NULL`. |
-| expires_at | timestamp | NOT NULL | thời điểm hết hạn refresh token |
-| revoked_at | timestamp | NULL | có giá trị khi logout/rotation |
-| created_at | timestamp | NOT NULL | audit phiên đăng nhập |
+| expires_at | timestamptz | NOT NULL | thời điểm hết hạn refresh token |
+| revoked_at | timestamptz | NULL | có giá trị khi logout/rotation |
+| created_at | timestamptz | NOT NULL | audit phiên đăng nhập |
 
 > Bảng này là phần mở rộng có chủ đích ngoài 4 bảng nghiệp vụ đề bài liệt kê. Nó giải quyết đúng semantics của `logout`: access token JWT vẫn stateless và ngắn hạn, còn refresh token được lưu bền vững để revoke/rotate. Không dùng bảng này để lưu access token.
 
@@ -179,9 +179,8 @@ erDiagram
 CREATE INDEX idx_requests_status              ON requests(status);
 CREATE INDEX idx_requests_assigned_developer  ON requests(assigned_developer_id);
 CREATE INDEX idx_requests_client              ON requests(client_id);
-CREATE INDEX idx_histories_request            ON request_histories(request_id);
-CREATE INDEX idx_alerts_target                ON alerts(target_member_id);
-CREATE INDEX idx_alerts_is_read               ON alerts(is_read);
+CREATE INDEX idx_histories_request_changed    ON request_histories(request_id, changed_at);
+CREATE INDEX idx_alerts_target_read            ON alerts(target_member_id, is_read);
 CREATE INDEX idx_refresh_tokens_member_active ON refresh_tokens(member_id, expires_at) WHERE revoked_at IS NULL;
 ```
 Lý do: filter request theo status/role, auto-assign đếm theo developer, lấy history theo request, lấy alert của 1 người (đọc/chưa đọc) — đều là các truy vấn nóng.
@@ -197,8 +196,8 @@ Table members {
   password varchar [not null, note: 'BCrypt hash']
   name varchar [not null]
   role varchar [not null, note: 'ADMIN / DEVELOPER / CLIENT']
-  last_completed_at timestamp [note: 'tie-break auto-assign']
-  created_at timestamp [not null]
+  last_completed_at timestamptz [note: 'tie-break auto-assign']
+  created_at timestamptz [not null]
 }
 
 Table requests {
@@ -211,8 +210,8 @@ Table requests {
   client_id bigint [not null, ref: > members.id]
   assigned_developer_id bigint [ref: > members.id]
   version int [not null, default: 0, note: 'optimistic lock']
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table request_histories {
@@ -221,7 +220,7 @@ Table request_histories {
   changed_by bigint [not null, ref: > members.id]
   from_status varchar
   to_status varchar
-  changed_at timestamp [not null]
+  changed_at timestamptz [not null]
   memo varchar
 }
 
@@ -232,22 +231,22 @@ Table alerts {
   alert_type varchar [not null, note: 'ASSIGNED / STATUS_CHANGED / HIGH_PRIORITY_REGISTERED']
   message varchar
   is_read boolean [not null, default: false]
-  created_at timestamp [not null]
+  created_at timestamptz [not null]
 }
 
 Table refresh_tokens {
   id uuid [pk]
   member_id bigint [not null, ref: > members.id]
   token_hash varchar [not null, unique, note: 'SHA-256 hash of opaque refresh token']
-  expires_at timestamp [not null]
-  revoked_at timestamp
-  created_at timestamp [not null]
+  expires_at timestamptz [not null]
+  revoked_at timestamptz
+  created_at timestamptz [not null]
 }
 ```
 
 ## 7. Flyway migration (V1__init.sql)
 
-> Đặt tại `src/main/resources/db/migration/V1__init.sql`. Flyway chạy tự động lúc app start.
+> File thực thi: `BE/src/main/resources/db/migration/V1__init.sql`. Flyway chạy tự động lúc app start.
 
 ```sql
 CREATE TABLE members (
@@ -256,8 +255,8 @@ CREATE TABLE members (
     password           VARCHAR(255) NOT NULL,
     name               VARCHAR(100) NOT NULL,
     role               VARCHAR(20)  NOT NULL,
-    last_completed_at  TIMESTAMP,
-    created_at         TIMESTAMP    NOT NULL DEFAULT now(),
+    last_completed_at  TIMESTAMPTZ,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_members_role CHECK (role IN ('ADMIN', 'DEVELOPER', 'CLIENT'))
 );
 
@@ -271,11 +270,12 @@ CREATE TABLE requests (
     client_id              BIGINT       NOT NULL REFERENCES members(id) ON DELETE RESTRICT,
     assigned_developer_id  BIGINT       REFERENCES members(id) ON DELETE RESTRICT,
     version                INT          NOT NULL DEFAULT 0,
-    created_at             TIMESTAMP    NOT NULL DEFAULT now(),
-    updated_at             TIMESTAMP    NOT NULL DEFAULT now(),
+    created_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_requests_category CHECK (category IN ('BUG', 'FEATURE', 'INQUIRY')),
     CONSTRAINT chk_requests_priority CHECK (priority IN ('HIGH', 'MEDIUM', 'LOW')),
-    CONSTRAINT chk_requests_status CHECK (status IN ('PENDING', 'IN_PROGRESS', 'DONE'))
+    CONSTRAINT chk_requests_status CHECK (status IN ('PENDING', 'IN_PROGRESS', 'DONE')),
+    CONSTRAINT chk_requests_version CHECK (version >= 0)
 );
 
 CREATE TABLE request_histories (
@@ -284,8 +284,12 @@ CREATE TABLE request_histories (
     changed_by   BIGINT      NOT NULL REFERENCES members(id) ON DELETE RESTRICT,
     from_status  VARCHAR(20),
     to_status    VARCHAR(20),
-    changed_at   TIMESTAMP   NOT NULL DEFAULT now(),
-    memo         VARCHAR(255)
+    changed_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    memo         VARCHAR(255),
+    CONSTRAINT chk_histories_from_status
+        CHECK (from_status IS NULL OR from_status IN ('PENDING', 'IN_PROGRESS', 'DONE')),
+    CONSTRAINT chk_histories_to_status
+        CHECK (to_status IS NULL OR to_status IN ('PENDING', 'IN_PROGRESS', 'DONE'))
 );
 
 CREATE TABLE alerts (
@@ -295,7 +299,7 @@ CREATE TABLE alerts (
     alert_type        VARCHAR(30) NOT NULL,
     message           VARCHAR(255),
     is_read           BOOLEAN     NOT NULL DEFAULT false,
-    created_at        TIMESTAMP   NOT NULL DEFAULT now(),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT chk_alerts_type CHECK (alert_type IN ('ASSIGNED', 'STATUS_CHANGED', 'HIGH_PRIORITY_REGISTERED'))
 );
 
@@ -303,42 +307,46 @@ CREATE TABLE refresh_tokens (
     id          UUID         PRIMARY KEY,
     member_id   BIGINT       NOT NULL REFERENCES members(id) ON DELETE RESTRICT,
     token_hash  VARCHAR(64)  NOT NULL UNIQUE,
-    expires_at  TIMESTAMP    NOT NULL,
-    revoked_at  TIMESTAMP,
-    created_at  TIMESTAMP    NOT NULL DEFAULT now(),
-    CONSTRAINT chk_refresh_expiry CHECK (expires_at > created_at)
+    expires_at  TIMESTAMPTZ NOT NULL,
+    revoked_at  TIMESTAMPTZ,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_refresh_expiry CHECK (expires_at > created_at),
+    CONSTRAINT chk_refresh_revocation CHECK (revoked_at IS NULL OR revoked_at >= created_at)
 );
 
 CREATE INDEX idx_requests_status             ON requests(status);
 CREATE INDEX idx_requests_assigned_developer ON requests(assigned_developer_id);
 CREATE INDEX idx_requests_client             ON requests(client_id);
-CREATE INDEX idx_histories_request           ON request_histories(request_id);
-CREATE INDEX idx_alerts_target               ON alerts(target_member_id);
-CREATE INDEX idx_alerts_is_read              ON alerts(is_read);
+CREATE INDEX idx_histories_request_changed   ON request_histories(request_id, changed_at);
+CREATE INDEX idx_alerts_target_read           ON alerts(target_member_id, is_read);
 CREATE INDEX idx_refresh_tokens_member_active
     ON refresh_tokens(member_id, expires_at) WHERE revoked_at IS NULL;
 ```
 
-## 8. Seed data (V2__seed.sql)
+## 8. Demo seed (V2__seed_demo.sql)
 
-> Password seed đều là BCrypt hash hợp lệ của `1234` (cost 10), chỉ dùng cho demo. Seed giúp demo filter/stats/auto-assign có dữ liệu ngay.
+> File `BE/src/main/resources/db/demo/V2__seed_demo.sql` chỉ nằm trong Flyway locations của profile `dev`/`docker`; production không nạp tài khoản mẫu. Password seed đều là BCrypt hash hợp lệ của `1234` (cost 10).
 
 ```sql
 -- Password của mọi tài khoản là '1234'. Hash BCrypt thật (cost=10), chỉ dùng cho demo.
-INSERT INTO members (email, name, role, password, created_at) VALUES
- ('admin@bzcom.com',   'Admin',   'ADMIN',     '$2y$10$9FEnUY37Ok54UtidIbFlyOyNct/GMaF9dG1.GtIemnW6vWTPyfnGW', now()),
- ('dev1@bzcom.com',    'Dev One', 'DEVELOPER', '$2y$10$9FEnUY37Ok54UtidIbFlyOyNct/GMaF9dG1.GtIemnW6vWTPyfnGW', now()),
- ('dev2@bzcom.com',    'Dev Two', 'DEVELOPER', '$2y$10$9FEnUY37Ok54UtidIbFlyOyNct/GMaF9dG1.GtIemnW6vWTPyfnGW', now()),
- ('client1@bzcom.com', 'Client One','CLIENT',  '$2y$10$9FEnUY37Ok54UtidIbFlyOyNct/GMaF9dG1.GtIemnW6vWTPyfnGW', now());
+INSERT INTO members (email, name, role, password) VALUES
+ ('admin@bzcom.com',   'Admin',   'ADMIN',     '$2y$10$9FEnUY37Ok54UtidIbFlyOyNct/GMaF9dG1.GtIemnW6vWTPyfnGW'),
+ ('dev1@bzcom.com',    'Dev One', 'DEVELOPER', '$2y$10$9FEnUY37Ok54UtidIbFlyOyNct/GMaF9dG1.GtIemnW6vWTPyfnGW'),
+ ('dev2@bzcom.com',    'Dev Two', 'DEVELOPER', '$2y$10$9FEnUY37Ok54UtidIbFlyOyNct/GMaF9dG1.GtIemnW6vWTPyfnGW'),
+ ('client1@bzcom.com', 'Client One','CLIENT',  '$2y$10$9FEnUY37Ok54UtidIbFlyOyNct/GMaF9dG1.GtIemnW6vWTPyfnGW');
 
 -- vài request mẫu để demo filter & statistics
-INSERT INTO requests (title, description, category, priority, status, client_id, created_at, updated_at) VALUES
- ('Login fails',        'Click login shows 500', 'BUG',     'HIGH',   'PENDING', 4, now(), now()),
- ('Add Google login',   'SSO with Google',       'FEATURE', 'MEDIUM', 'PENDING', 4, now(), now()),
- ('How to reset pass?', 'Cannot find the button','INQUIRY', 'LOW',    'PENDING', 4, now(), now());
+INSERT INTO requests (title, description, category, priority, status, client_id)
+SELECT seed.title, seed.description, seed.category, seed.priority, 'PENDING', member.id
+FROM (VALUES
+ ('Login fails',        'Click login shows 500', 'BUG',     'HIGH'),
+ ('Add Google login',   'SSO with Google',       'FEATURE', 'MEDIUM'),
+ ('How to reset pass?', 'Cannot find the button','INQUIRY', 'LOW')
+) AS seed(title, description, category, priority)
+JOIN members member ON member.email = 'client1@bzcom.com';
 ```
 
-> **Reset để demo lại sạch:** `docker compose down -v && docker compose up` (xoá volume → Flyway chạy lại từ đầu). Hoặc cung cấp endpoint `POST /api/admin/reset-demo` (chỉ profile demo).
+> **Reset để demo lại sạch (trong `BE/`):** `docker compose down -v && docker compose up` (xoá volume → Flyway chạy lại từ đầu). Không cần endpoint reset dữ liệu cho MVP.
 
 ---
 

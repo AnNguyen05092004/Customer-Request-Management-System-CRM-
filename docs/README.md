@@ -24,6 +24,7 @@ Hiện tại yêu cầu của khách hàng đến qua email / KakaoTalk / điệ
 | 8 | [FRONTEND.md](./FRONTEND.md) | React SPA (Vite + TS + Ant Design) phủ toàn bộ API — lớp demo trực quan | Slide 9 |
 | 9 | [TASKS.md](./TASKS.md) | **Task-list triển khai đầy đủ** — chia phase, có owner/phụ thuộc/DoD, giao cho thành viên hoặc AI agent | — |
 | 10 | [BACKEND_CODING_RULES.md](./BACKEND_CODING_RULES.md) | Quy tắc code Java/Spring Boot, layer, security, transaction, test, PR checklist | — |
+| 11 | [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) | Kế hoạch foundation, thứ tự merge, lịch một tuần và checklist điều phối cho leader | — |
 
 > Bản kế hoạch tổng thể (tư duy chiến lược + phân công + kế hoạch phase) nằm ở [`../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md`](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md). Bộ `docs/` này là bản **chuyên sâu từng mảng** để implement và bảo vệ trong Q&A.
 
@@ -31,7 +32,7 @@ Hiện tại yêu cầu của khách hàng đến qua email / KakaoTalk / điệ
 
 ## 3. Tech stack (tóm tắt)
 
-**Backend:** Java 21 (LTS) · Spring Boot 3.2 · Spring Security 6 + JWT · Spring Data JPA · PostgreSQL 16 · Flyway · springdoc-openapi (Swagger UI) · MapStruct · Lombok · JUnit 5 · Testcontainers · Spotless · JaCoCo · Docker Compose · GitHub Actions.
+**Backend:** Java 21 (LTS) · Spring Boot 3.5.5 · Spring Security 6 + JWT · Spring Data JPA · PostgreSQL 16 · Flyway · springdoc-openapi (Swagger UI) · MapStruct · Lombok · JUnit 5 · Testcontainers · Spotless · JaCoCo · Docker Compose · GitHub Actions.
 
 **Frontend (lớp demo):** Vite · React 18 · TypeScript · Ant Design · TanStack Query · axios · React Router — chi tiết [FRONTEND.md](./FRONTEND.md).
 
@@ -41,9 +42,9 @@ Chi tiết & lý do chọn: xem [ARCHITECTURE.md §Tech decisions](./ARCHITECTUR
 
 ```bash
 # Yêu cầu: Docker + Docker Compose
-git clone <repo-url> bzcom-crm && cd bzcom-crm
-cp .env.example .env          # điền OPENAI_API_KEY nếu chạy LLM thật; để trống thì dùng mock
-docker compose up --build     # app + postgres khởi động, Flyway migrate, seed data nạp
+git clone <repo-url> bzcom-crm && cd bzcom-crm/BE
+cp .env.example .env
+docker compose up --build     # app + postgres khởi động, Flyway migrate, seed demo nạp
 ```
 
 Sau khi lên:
@@ -57,10 +58,13 @@ Sau khi lên:
 ### Chạy dev với PostgreSQL local
 
 ```bash
-# Khởi động riêng PostgreSQL từ docker-compose trước, sau đó:
+# Chạy trong thư mục BE/. Khởi động riêng PostgreSQL trước, sau đó:
 docker compose up -d db
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
+
+Profile `dev` mặc định kết nối PostgreSQL container qua `localhost:5433`; có thể đổi
+`POSTGRES_HOST_PORT` và `DB_URL` trong `BE/.env` khi cần.
 
 ## 5. Tài khoản seed sẵn để demo
 
@@ -103,16 +107,18 @@ bzcom-crm/
 │   ├── GIT_WORKFLOW.md
 │   ├── FRONTEND.md
 │   └── BACKEND_CODING_RULES.md
-├── frontend/                 # React SPA (Vite + TS + Ant Design — xem FRONTEND.md)
-├── src/main/java/com/bzcom/crm/   # package-by-feature (xem ARCHITECTURE.md)
-├── src/main/resources/
-│   ├── application.yml
-│   └── db/migration/         # Flyway V1__init.sql (5 bảng), V2__seed.sql
-├── src/test/java/            # JUnit + Mockito + Testcontainers PostgreSQL
-├── .github/workflows/ci.yml  # GitHub Actions
-├── docker-compose.yml
-├── Dockerfile
-└── pom.xml
+├── FE/                       # frontend và UI specification
+├── BE/                       # Spring Boot backend độc lập
+│   ├── src/main/java/com/bzcom/crm/  # package-by-feature
+│   ├── src/main/resources/
+│   │   ├── db/migration/     # schema dùng ở mọi môi trường
+│   │   └── db/demo/          # seed chỉ cho profile dev/docker
+│   ├── src/test/java/        # unit + Testcontainers PostgreSQL
+│   ├── compose.yaml
+│   ├── Dockerfile
+│   ├── mvnw
+│   └── pom.xml
+└── .github/workflows/backend-ci.yml
 ```
 
 ---

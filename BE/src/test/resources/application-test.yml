@@ -1,0 +1,14 @@
+debug: false
+
+spring:
+  flyway:
+    locations: classpath:db/migration
+
+crm:
+  security:
+    jwt:
+      secret: test-only-secret-with-at-least-thirty-two-characters
+
+logging:
+  level:
+    root: INFO

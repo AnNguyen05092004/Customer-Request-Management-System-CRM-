@@ -75,13 +75,13 @@
 ### [ ] T-1.1 — Khởi tạo project Spring Boot
 - Owner: A   Depends on: T-0.4   Ước lượng: 15′
 - Refs: [ARCHITECTURE.md](./ARCHITECTURE.md), [kế hoạch §3.2](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md)
-- Việc: tạo project Maven (Spring Initializr): Java 21 (LTS), Spring Boot 3.2.x (đặt `<java.version>21</java.version>` trong pom.xml). Thêm dependency: web, data-jpa, security, `spring-security-test`, validation, actuator, postgresql, flyway-core, jjwt (api/impl/jackson), springdoc-openapi-starter-webmvc-ui, mapstruct + processor, lombok, `testcontainers-junit-jupiter` + `testcontainers-postgresql` (test). Cấu hình MapStruct `componentModel=spring`, compiler annotation processors (Lombok + MapStruct), Spotless (format/import order) và JaCoCo report. Tạo `CrmApplication.java`, package gốc `com.bzcom.crm`.
-- DoD: `mvn compile` pass; app start được (dù chưa có endpoint); push branch `feature/foundation`.
+- Việc: tạo project Maven trong `BE/`: Java 21 (LTS), Spring Boot 3.5.5 (khóa bằng Maven Wrapper và `pom.xml`). Thêm dependency: web, data-jpa, security, `spring-security-test`, validation, actuator, postgresql, flyway-core + PostgreSQL module, jjwt (api/impl/jackson), springdoc-openapi-starter-webmvc-ui, mapstruct + processor, lombok, `spring-boot-testcontainers`, Testcontainers 2.0.5 `testcontainers-junit-jupiter` + `testcontainers-postgresql` (test; tương thích Docker Engine 29+). Tạo `CentralMapperConfig` (`componentModel=spring`, constructor injection, unmapped target = error), compiler annotation processors (Lombok + MapStruct), Spotless (format/import order), Failsafe cho `*IT` và JaCoCo report. Tạo `CrmApplication.java`, package gốc `com.bzcom.crm`.
+- DoD: `cd BE && ./mvnw compile` pass; app start được (dù chưa có business endpoint); push branch `feature/foundation`.
 
 ### [ ] T-1.2 — Cấu hình DB + Flyway + profiles
 - Owner: A   Depends on: T-1.1   Ước lượng: 15′
 - Refs: [ERD.md §7](./ERD.md#7-flyway-migration-v1__initsql), [ARCHITECTURE.md §9](./ARCHITECTURE.md#9-cấu-hình-profile--môi-trường)
-- Việc: tạo `application.yml` với profile `dev`/`docker` đều trỏ PostgreSQL qua env; test integration dùng `@ServiceConnection` hoặc `@DynamicPropertySource` từ Testcontainers PostgreSQL. Tạo `db/migration/V1__init.sql` (từ ERD.md, gồm 5 bảng). Bật Flyway.
+- Việc: tạo `application.yml` với profile `dev`/`docker` đều trỏ PostgreSQL qua env; test integration dùng `@ServiceConnection` từ Testcontainers PostgreSQL. Tạo `db/migration/V1__init.sql` (5 bảng) dùng mọi môi trường; seed demo đặt riêng trong `db/demo` và chỉ bật ở `dev`/`docker`. Bật Flyway, đặt `ddl-auto=validate`.
 - DoD: chạy profile `dev` → Flyway tạo 5 bảng + index; test integration khởi PostgreSQL container và log Flyway "Successfully applied 1 migration".
 
 ### [ ] T-1.3 — Common: ApiResponse + PageResponse
@@ -129,7 +129,7 @@
 ### [ ] T-1.10 — Seed data
 - Owner: A   Depends on: T-1.8   Ước lượng: 10′
 - Refs: [ERD.md §8](./ERD.md#8-seed-data-v2__seedsql), [README §5](./README.md)
-- Việc: `V2__seed.sql` (hoặc `CommandLineRunner` chỉ chạy khi profile demo): admin/dev1/dev2/client1 (password BCrypt của `1234`) + vài request mẫu. Dùng hash BCrypt thật.
+- Việc: `db/demo/V2__seed_demo.sql` chỉ được thêm vào Flyway locations của profile `dev`/`docker`: admin/dev1/dev2/client1 (password BCrypt của `1234`) + vài request mẫu. Dùng hash BCrypt thật; production profile chỉ chạy `db/migration`.
 - DoD: sau khi start (profile demo), login được cả 4 tài khoản; có sẵn request để test filter/stats.
 
 > **🚩 Milestone M1:** merge Phase 1 vào `develop`. B/C/D bắt đầu Phase 2. A thông báo "nền tảng sẵn sàng".
@@ -245,7 +245,7 @@
 ### [ ] T-4.1 — Docker Compose (app + postgres)
 - Owner: D   Depends on: M3   Ước lượng: 30′
 - Refs: [ARCHITECTURE.md §10](./ARCHITECTURE.md#10-kiến-trúc-triển-khai-docker), [README §4](./README.md)
-- Việc: `Dockerfile` multi-stage (Maven build → JRE slim). `docker-compose.yml`: service `db`(postgres:16 + healthcheck + volume) + `app`(depends_on db healthy, env từ `.env`). `.env.example`.
+- Việc: `BE/Dockerfile` multi-stage (Maven build → JRE slim). `BE/compose.yaml`: service `db` (postgres:16 + healthcheck + volume) + `app` (depends_on db healthy, env từ `.env`). `BE/.env.example`.
 - DoD: máy sạch chạy `docker compose up --build` → app lên, Flyway migrate, Swagger truy cập `:8080`; seed data có sẵn.
 
 ### [ ] T-4.2 — Integration test luồng chính (E2E)
@@ -257,7 +257,7 @@
 ### [ ] T-4.3 — Hoàn thiện GitHub Actions CI
 - Owner: D   Depends on: T-0.3   Ước lượng: 15′
 - Refs: [GIT_WORKFLOW.md §5](./GIT_WORKFLOW.md#5-github-actions-ci)
-- Việc: `.github/workflows/ci.yml` chạy `mvn -B verify` trên PR vào develop/main; GitHub-hosted runner dùng Docker cho Testcontainers PostgreSQL. Gắn required status check vào branch protection.
+- Việc: `.github/workflows/backend-ci.yml` chạy `cd BE && ./mvnw -B verify` trên PR vào develop/main; GitHub-hosted runner dùng Docker cho Testcontainers PostgreSQL. Gắn required status check vào branch protection.
 - DoD: mở PR → CI chạy; PR fail test không merge được; badge CI xanh trên README.
 
 ### [ ] T-4.4 — Endpoint/lệnh reset demo

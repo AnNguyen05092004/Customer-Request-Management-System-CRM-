@@ -63,7 +63,7 @@
 ### Level 2 — Container
 | Container | Công nghệ | Trách nhiệm |
 |---|---|---|
-| CRM API | Spring Boot 3.2 (Java 21) | Toàn bộ business logic, REST endpoints, Swagger |
+| CRM API | Spring Boot 3.5.5 (Java 21) | Toàn bộ business logic, REST endpoints, Swagger |
 | Database | PostgreSQL 16 | Lưu trữ bền vững; Flyway quản version schema |
 | LLM Provider | OpenAI/Claude API (external) | Phân loại/tóm tắt — có **mock** thay thế khi offline |
 
@@ -98,7 +98,7 @@
 Chia theo **tính năng** (không theo layer) để **mỗi người sở hữu 1 package → giảm xung đột merge** (hỗ trợ trực tiếp tiêu chí Git Flow). Chủ sở hữu ghi trong ngoặc (A/B/C/D — xem phân công ở [kế hoạch tổng thể](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md#10-phân-công-nhóm-4-người)).
 
 ```
-com.bzcom.crm
+BE/src/main/java/com/bzcom/crm
 ├── CrmApplication.java
 ├── common/                         (A - dùng chung)
 │   ├── response/ApiResponse.java   # wrapper {status,message,data}
@@ -212,7 +212,7 @@ DEVELOPER   RequestController   StatusService   RequestStatus(enum)   HistorySer
 
 | # | Quyết định | Lý do | Đánh đổi |
 |---|---|---|---|
-| ADR-01 | **Java 21 (LTS) + Spring Boot 3.2** | Bản LTS mới nhất; hệ sinh thái mạnh; hưởng tính năng mới (virtual threads, pattern matching, record patterns) | Nặng hơn Python cho demo nhỏ |
+| ADR-01 | **Java 21 (LTS) + Spring Boot 3.5.5** | Java LTS; phiên bản framework được khóa trong Maven Wrapper/pom để mọi máy build giống nhau | Nặng hơn Python cho demo nhỏ |
 | ADR-02 | **Modular Monolith** thay vì microservices | Team nhỏ, thời gian ngắn; vẫn giữ tư duy MSA | Không thật sự scale độc lập từng service |
 | ADR-03 | **Package-by-feature** | Mỗi người 1 package → ít merge conflict | Có chút lặp cấu trúc thư mục |
 | ADR-04 | **PostgreSQL 16 + Testcontainers PostgreSQL** | Migration, SQL, index và transaction test trên đúng dialect production | Integration test chậm hơn H2 nhưng tránh false confidence |
@@ -231,16 +231,16 @@ DEVELOPER   RequestController   StatusService   RequestStatus(enum)   HistorySer
 | `dev` | PostgreSQL Docker local | Mock | Phát triển hằng ngày, cùng dialect production |
 | `docker` | PostgreSQL (container) | Mock hoặc thật (theo env) | Demo chính thức |
 | `test` | Testcontainers PostgreSQL cô lập | Mock | Integration test/CI; Flyway chạy schema thật |
+| `prod` | PostgreSQL qua biến môi trường | Theo env | Không có default secret, không nạp seed demo |
 
 **Biến môi trường quan trọng** (`.env.example`):
 ```
-POSTGRES_URL=jdbc:postgresql://db:5432/bzcom
-POSTGRES_USER=bzcom
-POSTGRES_PASSWORD=bzcom
+DB_URL=jdbc:postgresql://db:5432/bzcom_crm
+DB_USERNAME=bzcom
+DB_PASSWORD=<secret>
+POSTGRES_HOST_PORT=5433     # cổng DB publish ra host; nội bộ Compose vẫn là 5432
 JWT_SECRET=<chuỗi bí mật đủ dài>
-JWT_ACCESS_EXP_MIN=15
-JWT_REFRESH_EXP_DAYS=7
-LLM_ENABLED=false            # false → MockLlmService (an toàn cho demo)
+LLM_ENABLED=false            # biến sẽ map vào llm.enabled khi tích hợp LLM
 OPENAI_API_KEY=              # chỉ cần khi LLM_ENABLED=true
 ```
 > Secret **không commit** vào repo; `application.yml` đọc qua `${ENV}`.
@@ -263,8 +263,8 @@ OPENAI_API_KEY=              # chỉ cần khi LLM_ENABLED=true
 
 - `Dockerfile`: multi-stage (build bằng Maven → chạy trên JRE slim) để image gọn.
 - `db` có **healthcheck**; `app` `depends_on` `db` khoẻ mới start → tránh lỗi kết nối lúc khởi động.
-- Flyway migrate tự động lúc app start; `V2__seed.sql` nạp seed data (bật/tắt bằng profile).
-- Lệnh demo duy nhất: `docker compose up --build`.
+- Flyway migrate tự động lúc app start; schema ở `db/migration`, seed demo ở `db/demo` và chỉ được bật bởi profile `dev`/`docker`.
+- Lệnh demo duy nhất trong thư mục `BE/`: `docker compose up --build`.
 
 ---
 
