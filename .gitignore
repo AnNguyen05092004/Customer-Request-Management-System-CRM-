@@ -1,0 +1,15 @@
+target/
+.idea/
+.vscode/
+*.iml
+.DS_Store
+.env
+*.log
+
+# Local runtime data and secrets
+data/
+secrets/
+
+# Frontend dependencies/build output
+node_modules/
+dist/

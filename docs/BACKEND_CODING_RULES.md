@@ -67,7 +67,7 @@ public ResponseEntity<ApiResponse<RequestResponse>> updateStatus(
 - Validation ở request DTO bằng Jakarta Validation: `@NotBlank`, `@Email`, `@Size`, `@NotNull`, `@Positive`, `@Min`.
 - Validation cross-field đặt trong service hoặc custom validator: `auto=false` bắt buộc `developerId`; `auto=true` không nhận developerId.
 - Public registration DTO không có `role`; cấu hình `spring.jackson.deserialization.fail-on-unknown-properties=true` để reject field lạ. Không “ignore” input có thể leo quyền.
-- Mapper MapStruct chỉ map field rõ ràng. Các field hệ thống (`id`, `clientId`, `status`, `version`, timestamps, password hash) do service kiểm soát, không map trực tiếp từ client.
+- Mapper MapStruct khai báo `@Mapper(config = CentralMapperConfig.class)` để thống nhất Spring constructor injection và fail compile khi bỏ sót target field. Các field hệ thống (`id`, `clientId`, `status`, `version`, timestamps, password hash) do service kiểm soát, không map trực tiếp từ client.
 - Response không bao giờ có password/hash, JWT secret, refresh raw token trong log, hay entity lazy graph.
 
 ## 5. Service, transaction và nghiệp vụ
@@ -139,13 +139,13 @@ public ResponseEntity<ApiResponse<RequestResponse>> updateStatus(
 
 ### Maven quality gate
 
-- `mvn -B verify` là lệnh local/CI chuẩn: compile, unit/integration test, Spotless check và JaCoCo report.
+- `cd BE && ./mvnw -B verify` là lệnh local/CI chuẩn: compile, unit/integration test, Spotless check và JaCoCo report.
 - Dùng Spotless để format/import order tự động; không format bằng tay cả repo trong PR feature.
 - JaCoCo dùng để phát hiện vùng quan trọng chưa test; không đặt coverage percentage gate cho MVP nếu nó làm team tốn thời gian, nhưng service workflow/auth mới phải có test.
 
 ## 10. Java style và review
 
-- Java 21, Spring Boot 3.2; formatter và import theo IDE/project config. Không commit file IDE cá nhân.
+- Java 21, Spring Boot 3.5.5; formatter và import do Spotless trong `BE/pom.xml` quyết định. Không commit file IDE cá nhân.
 - Tên class PascalCase; method/field camelCase; constant UPPER_SNAKE_CASE; boolean bắt đầu `is/has/can`.
 - Một public class/record mỗi file. Method ngắn, guard clause sớm; không lồng nhiều `if`.
 - Ưu tiên constructor injection; không dùng field injection hoặc `@Autowired` field.
@@ -160,7 +160,7 @@ public ResponseEntity<ApiResponse<RequestResponse>> updateStatus(
 - [ ] Validation, 401/403/404/409/422 và exception handler đã có test phù hợp.
 - [ ] Migration mới (nếu đổi schema), chạy được trên Testcontainers PostgreSQL.
 - [ ] Không có secret, token/password raw trong code/log/test fixture.
-- [ ] `mvn -B verify` xanh; OpenAPI runtime snapshot không lệch `openapi.yaml`.
+- [ ] `cd BE && ./mvnw -B verify` xanh; OpenAPI runtime snapshot không lệch `openapi.yaml`.
 - [ ] PR nhỏ, một mục đích; mô tả test đã chạy và ảnh hưởng contract nếu có.
 
 ---

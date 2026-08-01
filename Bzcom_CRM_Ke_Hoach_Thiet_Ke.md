@@ -97,7 +97,7 @@ Bảng **"Hiring Evaluation Criteria"** ở cuối đề chính là thước đo
 | Lớp | Công nghệ | Phiên bản gợi ý | Lý do |
 |---|---|---|---|
 | Ngôn ngữ | Java | 21 (LTS) | Bản LTS mới nhất, hỗ trợ virtual threads / pattern matching |
-| Framework | Spring Boot | 3.2.x+ | Hệ sinh thái mạnh, đội đã quen |
+| Framework | Spring Boot | 3.5.5 | Phiên bản khóa trong Maven Wrapper/pom; hệ sinh thái mạnh, đội đã quen |
 | Web | Spring Web (REST) | — | REST controller |
 | Bảo mật | Spring Security 6 + JWT (`io.jsonwebtoken:jjwt` 0.12.x) | — | Bắt buộc theo đề |
 | ORM | Spring Data JPA + Hibernate | — | Map ERD → Entity |
@@ -110,7 +110,7 @@ Bảng **"Hiring Evaluation Criteria"** ở cuối đề chính là thước đo
 | Validation | Jakarta Bean Validation | — | `@Valid` |
 | Test | JUnit 5 + Mockito (+ Testcontainers) | — | Unit + integration |
 | LLM | OpenAI API **hoặc** Anthropic Claude API | — | Qua `LlmService` trừu tượng |
-| Đóng gói | Docker + docker-compose | — | Demo "1 lệnh chạy" |
+| Đóng gói | Docker + Docker Compose | — | Demo "1 lệnh chạy" |
 | CI | GitHub Actions | — | Build + test trên mỗi PR |
 | Build tool | Maven (hoặc Gradle) | — | Quản lý dependency |
 
@@ -218,8 +218,8 @@ com.bzcom.crm
 | password | varchar | **BCrypt hash** |
 | name | varchar | |
 | role | varchar | ADMIN / DEVELOPER / CLIENT |
-| last_completed_at | timestamp | tie-break cho auto-assign |
-| created_at | timestamp | |
+| last_completed_at | timestamptz | tie-break cho auto-assign |
+| created_at | timestamptz | UTC instant |
 
 **requests** — yêu cầu khách hàng
 | Cột | Kiểu | Ghi chú |
@@ -233,7 +233,7 @@ com.bzcom.crm
 | client_id | bigint FK → members.id | người tạo |
 | assigned_developer_id | bigint FK → members.id | nullable |
 | version | int | **optimistic lock** (@Version) |
-| created_at / updated_at | timestamp | JPA Auditing |
+| created_at / updated_at | timestamptz | UTC instant, JPA Auditing |
 
 **request_histories** — lịch sử thay đổi
 | Cột | Kiểu | Ghi chú |
@@ -242,7 +242,7 @@ com.bzcom.crm
 | request_id | bigint FK → requests.id | |
 | changed_by | bigint FK → members.id | ai thay đổi |
 | from_status / to_status | varchar | nullable (assign thì status không đổi) |
-| changed_at | timestamp | |
+| changed_at | timestamptz | UTC instant |
 | memo | varchar | mô tả thay đổi |
 
 **alerts** — thông báo
@@ -254,7 +254,7 @@ com.bzcom.crm
 | alert_type | varchar | ASSIGNED / STATUS_CHANGED / HIGH_PRIORITY_REGISTERED |
 | message | varchar | |
 | is_read | boolean | default false |
-| created_at | timestamp | |
+| created_at | timestamptz | UTC instant |
 
 **refresh_tokens** — phiên refresh token có thể thu hồi
 | Cột | Kiểu | Ghi chú |
@@ -262,7 +262,7 @@ com.bzcom.crm
 | id | uuid PK | định danh phiên |
 | member_id | bigint FK → members.id | chủ sở hữu |
 | token_hash | varchar(64) unique | SHA-256 của opaque refresh token, không lưu raw token |
-| expires_at / revoked_at / created_at | timestamp | rotation/logout dùng `revoked_at` |
+| expires_at / revoked_at / created_at | timestamptz | UTC instant; rotation/logout dùng `revoked_at` |
 
 ### 5.2 Quan hệ (giải thích được trong PPT)
 - `members (1) ── (N) requests` qua **client_id** (một client tạo nhiều request).
@@ -285,8 +285,8 @@ Table members {
   password varchar [not null, note: 'BCrypt hash']
   name varchar [not null]
   role varchar [not null, note: 'ADMIN / DEVELOPER / CLIENT']
-  last_completed_at timestamp [note: 'tie-break auto-assign']
-  created_at timestamp [not null]
+  last_completed_at timestamptz [note: 'tie-break auto-assign']
+  created_at timestamptz [not null]
 }
 
 Table requests {
@@ -299,8 +299,8 @@ Table requests {
   client_id bigint [not null, ref: > members.id]
   assigned_developer_id bigint [ref: > members.id]
   version int [not null, default: 0, note: 'optimistic lock']
-  created_at timestamp [not null]
-  updated_at timestamp [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table request_histories {
@@ -309,7 +309,7 @@ Table request_histories {
   changed_by bigint [not null, ref: > members.id]
   from_status varchar
   to_status varchar
-  changed_at timestamp [not null]
+  changed_at timestamptz [not null]
   memo varchar
 }
 
@@ -320,16 +320,16 @@ Table alerts {
   alert_type varchar [not null, note: 'ASSIGNED / STATUS_CHANGED / HIGH_PRIORITY_REGISTERED']
   message varchar
   is_read boolean [not null, default: false]
-  created_at timestamp [not null]
+  created_at timestamptz [not null]
 }
 
 Table refresh_tokens {
   id uuid [pk]
   member_id bigint [not null, ref: > members.id]
   token_hash varchar [not null, unique]
-  expires_at timestamp [not null]
-  revoked_at timestamp
-  created_at timestamp [not null]
+  expires_at timestamptz [not null]
+  revoked_at timestamptz
+  created_at timestamptz [not null]
 }
 ```
 
@@ -608,7 +608,7 @@ feature/{tên}   ← nhánh cá nhân (feature/auth-jwt, feature/request-crud, .
   - `test:` test code
 
 ### 11.3 GitHub Actions CI (điểm cộng lớn)
-Workflow chạy `mvn verify` (build + test) trên **mỗi PR** → PR fail test hiện đỏ ngay. Slide 10 chụp lịch sử PR + CI xanh = gần như ăn trọn tiêu chí Git Flow.
+Workflow chạy `cd BE && ./mvnw verify` (build + test) trên **mỗi PR** → PR fail test hiện đỏ ngay. Slide 10 chụp lịch sử PR + CI xanh = gần như ăn trọn tiêu chí Git Flow.
 
 ```yaml
 # .github/workflows/ci.yml (phác thảo)
@@ -621,7 +621,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { java-version: '21', distribution: 'temurin' }
-      - run: mvn -B verify
+      - run: cd BE && ./mvnw -B verify
 ```
 
 ### 11.4 PR template

@@ -93,7 +93,7 @@ Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và
 
 ## 5. GitHub Actions CI
 
-`.github/workflows/ci.yml` — chạy `mvn verify` (build + test) trên **mỗi PR** vào `develop`/`main`:
+`.github/workflows/backend-ci.yml` — chạy Maven Wrapper trong `BE/` trên **mỗi PR** vào `develop`/`main`:
 
 ```yaml
 name: CI
@@ -111,7 +111,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build & test
-        run: mvn -B verify
+        working-directory: BE
+        run: ./mvnw -B verify
 ```
 
 > Unit test không cần DB; integration test dùng **Testcontainers PostgreSQL** nên GitHub Actions phải có Docker (ubuntu-latest đáp ứng). Nhờ vậy Flyway, PostgreSQL SQL và transaction được kiểm chứng trên đúng dialect production, không có false confidence do H2. PR fail test hiện **đỏ** ngay → không merge được.
