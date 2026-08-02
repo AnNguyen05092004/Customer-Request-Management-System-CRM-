@@ -85,7 +85,7 @@ Format: `type: mô tả ngắn (tiếng Anh hoặc Việt, thì hiện tại)`
 Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và** `develop`:
 - ☑ Require a pull request before merging
 - ☑ Require approvals: **1**
-- ☑ Require status checks to pass (chọn job `build` của CI)
+- ☑ Require status checks to pass (chọn status check `Backend CI / verify`)
 - ☑ Do not allow bypassing the above settings
 - ☑ Restrict who can push (không ai push trực tiếp)
 
@@ -96,12 +96,12 @@ Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và
 `.github/workflows/backend-ci.yml` — chạy Maven Wrapper trong `BE/` trên **mỗi PR** vào `develop`/`main`:
 
 ```yaml
-name: CI
+name: Backend CI
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main, develop]
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

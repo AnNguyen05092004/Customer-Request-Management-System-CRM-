@@ -154,6 +154,8 @@
 // Request body dùng cho cả hai endpoint (refresh token là opaque credential)
 { "refreshToken": "<refresh-token>" }
 
+// Validation: 32–512 ký tự; field lạ bị reject với 400.
+
 // POST /api/auth/refresh → 200: trả accessToken và refreshToken MỚI.
 // Token refresh cũ bị revoke nguyên tử; cùng một token chỉ có một refresh thành công.
 // POST /api/auth/logout → 200: refresh token bị revoke; access token còn tối đa 15 phút rồi tự hết hạn.

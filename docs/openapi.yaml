@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.1
 info:
   title: Bzcom CRM — Customer Request Management System API
   description: >
@@ -90,6 +90,7 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/TokenResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   # ─────────────────────────── MEMBER ───────────────────────────
@@ -528,6 +529,7 @@ components:
 
     LoginRequest:
       type: object
+      additionalProperties: false
       required: [email, password]
       properties:
         email:    { type: string, format: email, example: admin@bzcom.com }
@@ -535,9 +537,10 @@ components:
 
     RefreshTokenRequest:
       type: object
+      additionalProperties: false
       required: [refreshToken]
       properties:
-        refreshToken: { type: string, minLength: 32, description: 'opaque refresh token đã nhận khi login/refresh' }
+        refreshToken: { type: string, minLength: 32, maxLength: 512, description: 'opaque refresh token đã nhận khi login/refresh' }
 
     TokenResponse:
       type: object

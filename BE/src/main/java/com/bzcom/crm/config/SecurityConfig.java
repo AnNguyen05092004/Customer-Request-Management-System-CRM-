@@ -1,10 +1,12 @@
 package com.bzcom.crm.config;
 
+import com.bzcom.crm.auth.config.RefreshTokenProperties;
 import com.bzcom.crm.auth.jwt.JwtAuthenticationFilter;
 import com.bzcom.crm.auth.jwt.JwtProperties;
 import com.bzcom.crm.common.exception.ErrorCode;
 import com.bzcom.crm.common.response.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Clock;
 import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -25,8 +27,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, RefreshTokenProperties.class})
 public class SecurityConfig {
+
+    @Bean
+    Clock clock() {
+        return Clock.systemUTC();
+    }
 
     @Bean
     SecurityFilterChain securityFilterChain(
