@@ -54,16 +54,15 @@ git config --global user.email "email-cua-ban@example.com"
 
 ## 2. Nguồn chuẩn phải đọc trước khi code
 
-Thứ tự ưu tiên khi có thông tin mâu thuẫn:
+Đọc [`../CLAUDE.md`](../CLAUDE.md) trước: file này là working agreement chung, quy định
+traceability `task → docs/contract → code → test → PR`, ma trận đồng bộ tài liệu và cách xử
+lý khi implementation hợp lý cần thay đổi thiết kế đã ghi.
 
-1. [`openapi.yaml`](./openapi.yaml): contract HTTP — path, method, body, response, status.
-2. [`BUSINESS_LOGIC.md`](./BUSINESS_LOGIC.md): quyền, state machine, auto-assign, alert,
-   history và concurrency.
-3. [`ERD.md`](./ERD.md): bảng, cột, khóa, index và quan hệ dữ liệu.
-4. [`BACKEND_CODING_RULES.md`](./BACKEND_CODING_RULES.md): layer, convention, test và
-   checklist review.
-5. [`ARCHITECTURE.md`](./ARCHITECTURE.md): module boundary và lý do thiết kế.
-6. [`TASKS.md`](./TASKS.md): owner, dependency và Definition of Done của từng task.
+Không áp dụng một thứ tự ưu tiên chung cho mọi mâu thuẫn. Dùng đúng nguồn canonical theo
+phạm vi: `openapi.yaml` cho HTTP contract, `BUSINESS_LOGIC.md` cho nghiệp vụ, `ERD.md` +
+Flyway cho dữ liệu, `ARCHITECTURE.md`/`BACKEND_CODING_RULES.md` cho cấu trúc code và
+`TASKS.md` cho owner/dependency/DoD. Bảng đầy đủ và quy trình xử lý mâu thuẫn nằm trong
+[`CLAUDE.md P2–P3`](../CLAUDE.md#p2-nguồn-chuẩn-theo-từng-loại-quyết-định).
 
 Không tự đổi contract để code thuận tiện hơn. Nếu thực sự cần đổi, trao đổi cả team và tạo
 PR cập nhật OpenAPI/docs/test trước hoặc cùng thay đổi code.
@@ -104,6 +103,21 @@ docker compose down
 ```
 
 Không chạy `docker compose down -v` trừ khi chủ động muốn xóa database local.
+
+### Chạy full-stack bằng một lệnh
+
+Từ thư mục gốc repository (không phải `BE/`):
+
+```bash
+cp .env.example .env       # tùy chọn
+docker compose up --build
+docker compose ps          # db, backend, frontend phải healthy
+```
+
+- Frontend: <http://localhost:5173>
+- Backend/Swagger: <http://localhost:8080/swagger-ui.html>
+- Frontend Docker dùng Nginx proxy `/api`; khi chạy `npm run dev` thì vẫn dùng CORS tới
+  `localhost:8080`.
 
 ### 3.2 Xác nhận quality gate
 
@@ -320,7 +334,7 @@ Tạo PR từ `feature/*` vào `develop`, không vào `main`. PR phải:
 - mô tả thay đổi và cách test;
 - nêu rõ migration/contract/shared file đã đổi;
 - có ít nhất một reviewer không phải author;
-- chờ status check **`Backend CI / verify`** xanh;
+- chờ cả **`Backend CI / verify`** và **`Frontend CI / verify`** xanh;
 - xử lý hết review comment trước khi merge.
 
 Sau khi merge, có thể xóa feature branch. Bản cuối chỉ được đưa từ `develop` vào `main`
@@ -337,7 +351,8 @@ bằng release PR sau khi toàn bộ flow tích hợp và CI xanh.
 - [ ] Migration append-only, version không trùng và đã test trên PostgreSQL.
 - [ ] Không có secret, `.env`, token/password raw hoặc file IDE trong diff.
 - [ ] `git diff --check` sạch và `cd BE && ./mvnw -B verify` xanh.
-- [ ] PR vào `develop`, có reviewer và chờ `Backend CI / verify` xanh.
+- [ ] PR vào `develop`, có reviewer và chờ `Backend CI / verify` cùng
+      `Frontend CI / verify` xanh.
 
 ## 9. Khi bị vướng
 
@@ -358,5 +373,5 @@ hai module hiểu cùng một nghiệp vụ theo hai cách khác nhau.
 ---
 
 Tài liệu liên quan: [`GIT_WORKFLOW.md`](./GIT_WORKFLOW.md) ·
-[`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) ·
+[`../CLAUDE.md`](../CLAUDE.md) ·
 [`BACKEND_CODING_RULES.md`](./BACKEND_CODING_RULES.md) · [`TASKS.md`](./TASKS.md).

@@ -85,7 +85,8 @@ Format: `type: mô tả ngắn (tiếng Anh hoặc Việt, thì hiện tại)`
 Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và** `develop`:
 - ☑ Require a pull request before merging
 - ☑ Require approvals: **1**
-- ☑ Require status checks to pass (chọn status check `Backend CI / verify`)
+- ☑ Require status checks to pass (chọn `Backend CI / verify` và
+  `Frontend CI / verify`)
 - ☑ Do not allow bypassing the above settings
 - ☑ Restrict who can push (không ai push trực tiếp)
 
@@ -93,7 +94,14 @@ Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và
 
 ## 5. GitHub Actions CI
 
-`.github/workflows/backend-ci.yml` — chạy Maven Wrapper trong `BE/` trên **mỗi PR** vào `develop`/`main`:
+Hai workflow chạy trên **mỗi PR/push** vào `develop`/`main`:
+
+- `.github/workflows/backend-ci.yml` → status check `Backend CI / verify`, chạy
+  `BE/./mvnw -B verify`;
+- `.github/workflows/frontend-ci.yml` → status check `Frontend CI / verify`, chạy
+  `npm ci` và `npm run verify` trong `FE/`.
+
+Workflow backend có cấu trúc chính:
 
 ```yaml
 name: Backend CI
@@ -122,21 +130,29 @@ jobs:
 `.github/pull_request_template.md`:
 
 ```markdown
-## Thay đổi gì
-- 
+## Task và phạm vi
+- Task: T-x.y
+- Refs: docs/...#section
 
-## Loại thay đổi
-- [ ] feat  - [ ] fix  - [ ] refactor  - [ ] docs  - [ ] test  - [ ] chore
+## Thay đổi
+- ...
 
-## Checklist
-- [ ] Đã test luồng chính (có unit/integration test)
-- [ ] Đã cập nhật Swagger annotation (nếu đổi API)
-- [ ] Trả đúng response envelope + HTTP status
-- [ ] Không có breaking change (hoặc đã ghi rõ bên dưới)
-- [ ] CI xanh
+## Đồng bộ contract/docs
+- [ ] Không thay đổi contract/docs
+- [ ] Đã cập nhật các nguồn liên quan: ...
+- [ ] Đã kiểm tra link task ↔ docs
+- Breaking change/migration note: ...
 
-## Ghi chú cho reviewer
-- 
+## Kiểm chứng
+- [ ] Backend: `cd BE && ./mvnw -B verify` (nếu liên quan)
+- [ ] Frontend: `cd FE && npm run verify` (nếu liên quan)
+- [ ] Đã kiểm tra luồng chính và luồng lỗi/quyền liên quan
+
+## Contract checklist
+- [ ] Không lệch `docs/openapi.yaml`
+- [ ] Không trả entity/dữ liệu nhạy cảm; không commit secret
+- [ ] Migration append-only
+- [ ] Chỉ tick task hoàn thành khi đạt toàn bộ DoD
 ```
 
 ## 7. Chống xung đột merge (cho nhóm 4 người)

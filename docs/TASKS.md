@@ -24,7 +24,7 @@
 | **B** | Request core | `request` (CRUD, filter, stats) |
 | **C** | Workflow logic | `workflow` (assign, status, history) |
 | **D** | Cross-cutting & AI | `alert`, `llm`, Swagger config, Git/CI lead |
-| **FE** | Frontend | `frontend/` (do A hoặc D kiêm khi rảnh, hoặc chia theo feature) |
+| **FE** | Frontend | `FE/` (do A hoặc D kiêm khi rảnh, hoặc chia theo feature) |
 | **ALL** | Cả nhóm | việc chung |
 
 **Definition of Done — tiêu chuẩn chung** (áp cho MỌI task code backend, trừ khi task ghi khác):
@@ -128,7 +128,7 @@
 
 ### [ ] T-1.10 — Seed data
 - Owner: A   Depends on: T-1.8   Ước lượng: 10′
-- Refs: [ERD.md §8](./ERD.md#8-seed-data-v2__seedsql), [README §5](./README.md)
+- Refs: [ERD.md §8](./ERD.md#8-demo-seed-v2__seed_demosql), [README §5](./README.md)
 - Việc: `db/demo/V2__seed_demo.sql` chỉ được thêm vào Flyway locations của profile `dev`/`docker`: admin/dev1/dev2/client1 (password BCrypt của `1234`) + vài request mẫu. Dùng hash BCrypt thật; production profile chỉ chạy `db/migration`.
 - DoD: sau khi start (profile demo), login được cả 4 tài khoản; có sẵn request để test filter/stats.
 
@@ -242,7 +242,7 @@
 
 ## PHASE 4 — Tích hợp & chất lượng (ALL, ~80′)
 
-### [ ] T-4.1 — Docker Compose (app + postgres)
+### [x] T-4.1 — Docker Compose (app + postgres)
 - Owner: D   Depends on: M3   Ước lượng: 30′
 - Refs: [ARCHITECTURE.md §10](./ARCHITECTURE.md#10-kiến-trúc-triển-khai-docker), [README §4](./README.md)
 - Việc: `BE/Dockerfile` multi-stage (Maven build → JRE slim). `BE/compose.yaml`: service `db` (postgres:16 + healthcheck + volume) + `app` (depends_on db healthy, env từ `.env`). `BE/.env.example`.
@@ -257,12 +257,15 @@
 ### [ ] T-4.3 — Hoàn thiện GitHub Actions CI
 - Owner: D   Depends on: T-0.3   Ước lượng: 15′
 - Refs: [GIT_WORKFLOW.md §5](./GIT_WORKFLOW.md#5-github-actions-ci)
-- Việc: `.github/workflows/backend-ci.yml` chạy `cd BE && ./mvnw -B verify` trên PR vào develop/main; GitHub-hosted runner dùng Docker cho Testcontainers PostgreSQL. Gắn required status check vào branch protection.
-- DoD: mở PR → CI chạy; PR fail test không merge được; badge CI xanh trên README.
+- Việc: duy trì `backend-ci.yml` chạy Maven verify và `frontend-ci.yml` chạy npm verify
+  trên PR/push vào `develop`/`main`; GitHub-hosted runner dùng Docker cho Testcontainers
+  PostgreSQL. Gắn cả hai required status check vào branch protection.
+- DoD: mở PR → `Backend CI / verify` và `Frontend CI / verify` đều chạy; PR fail một
+  quality gate không merge được; badge CI xanh trên README.
 
 ### [ ] T-4.4 — Endpoint/lệnh reset demo
 - Owner: A   Depends on: T-1.10   Ước lượng: 10′
-- Refs: [ERD.md §8](./ERD.md#8-seed-data-v2__seedsql), [kế hoạch §13](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md#13-quản-lý-rủi-ro-demo)
+- Refs: [ERD.md §8](./ERD.md#8-demo-seed-v2__seed_demosql), [kế hoạch §13](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md#13-quản-lý-rủi-ro-demo)
 - Việc: cách reset dữ liệu về seed sạch (documented: `docker compose down -v && up`, hoặc endpoint `POST /api/admin/reset-demo` chỉ profile demo).
 - DoD: chạy reset → dữ liệu về đúng seed ban đầu; demo lặp lại nhất quán.
 
@@ -280,13 +283,15 @@
 
 > ⚠️ Chỉ bắt đầu khi backend endpoint tương ứng đã chạy (M2 trở đi). **Không hi sinh giờ backend cho FE.** Thứ tự cắt được nếu thiếu giờ: giữ tối thiểu T-5.1→T-5.5.
 
-### [ ] T-5.1 — Setup FE (Vite+TS+antd+router+RQ+apiClient+Auth)
+### [x] T-5.1 — Setup FE (Vite+TS+antd+router+RQ+apiClient+Auth)
 - Owner: FE   Depends on: T-0.2   Ước lượng: 40′
 - Refs: [FRONTEND.md §2,§3,§6,§7](./FRONTEND.md#3-cấu-trúc-thư-mục)
-- Việc: `npm create vite@latest frontend -- --template react-ts`; cài antd, @tanstack/react-query, axios, react-router-dom, @ant-design/charts. Tạo `apiClient.ts` (interceptor JWT + unwrap + 401 redirect), `queryClient.ts`, `types/api.ts` (§5), `AuthContext` + `ProtectedRoute`, `AppLayout` (menu theo role) + `main.tsx` providers. `.env.example`.
+- Việc: dựng Vite + React + TypeScript trực tiếp trong `FE/` (giữ `FE/ui_design_specification/`); cài antd, @tanstack/react-query, axios, react-router-dom. Tạo `apiClient.ts` (interceptor JWT + refresh single-flight + unwrap envelope), `queryClient.ts`, `types/api.ts` (§5), `AuthContext` + route guard, `AppLayout` + providers, `.env.example`, lint/typecheck/test/build scripts.
 - DoD: `npm run dev` chạy `:5173`; app render layout; chưa login → redirect `/login`.
+  Hoàn tất thêm lint/typecheck/Vitest/build gate, explicit Request demo mode và workflow
+  `Frontend CI / verify`.
 
-### [ ] T-5.2 — LoginPage
+### [x] T-5.2 — LoginPage
 - Owner: FE   Depends on: T-5.1, T-1.9   Ước lượng: 20′
 - Refs: [FRONTEND.md §10](./FRONTEND.md#10-đặc-tả-từng-trang)
 - Việc: Form login → `login()` → lưu token+role → điều hướng `/requests`. Lỗi 401 → message.error.
@@ -297,12 +302,16 @@
 - Refs: [FRONTEND.md §8,§10](./FRONTEND.md#8-data-fetching-với-tanstack-query)
 - Việc: `useRequests` + antd `Table` (StatusTag/Priority tag), filter bar (status/category/priority/keyword), pagination + sort map sang backend. Nút "Tạo request" chỉ CLIENT.
 - DoD: 3 role thấy đúng phạm vi; filter/sort/paging gọi backend đúng; loading/empty state ok.
+- Trạng thái FE: UI responsive + URL filter/sort/page + OpenAPI-aligned API hook + explicit
+  demo adapter đã xong; giữ task mở đến khi Request backend merge và kiểm chứng phạm vi 3 role.
 
 ### [ ] T-5.4 — RequestDetailPage (history timeline + assign + status + AI summary)
 - Owner: FE   Depends on: T-5.3, T-2.C3, T-2.C4, T-2.C2   Ước lượng: 45′
 - Refs: [FRONTEND.md §10](./FRONTEND.md#10-đặc-tả-từng-trang)
 - Việc: chi tiết + `Timeline` history. ADMIN: Modal gán (auto switch / chọn dev). ADMIN/DEV: nút đổi status **chỉ hiện transition hợp lệ**; 409 → message. Nút "AI tóm tắt".
 - DoD: gán & đổi status hoạt động, invalidate query → UI cập nhật + chuông cập nhật; nút status sai luật không hiện; 409 hiển thị message.
+- Trạng thái FE: read-only detail, workflow/assignment/AI placeholders và demo history đã xong;
+  giữ task mở vì mutation/history/LLM backend chưa merge.
 
 ### [ ] T-5.5 — RequestCreatePage + nút AI gợi ý
 - Owner: FE   Depends on: T-5.2, T-2.B2, T-3.2   Ước lượng: 30′
@@ -322,17 +331,19 @@
 - Việc: card total/completed/completionRate + pie theo category + bar theo developer. Chỉ ADMIN.
 - DoD: số & biểu đồ khớp `/stats`; non-ADMIN không vào được route.
 
-### [ ] T-5.8 — Member pages + Register
+### [x] T-5.8 — Member pages + Register
 - Owner: FE   Depends on: T-5.2, T-1.8   Ước lượng: 25′
 - Refs: [FRONTEND.md §10](./FRONTEND.md#10-đặc-tả-từng-trang)
 - Việc: RegisterPage (public), MemberListPage + MemberDetailPage (ADMIN).
 - DoD: đăng ký tạo member; ADMIN xem danh sách/chi tiết; non-ADMIN không vào.
 
-### [ ] T-5.9 — FE Docker + thêm vào compose + CORS
+### [x] T-5.9 — FE Docker + thêm vào compose + CORS
 - Owner: FE + D   Depends on: T-5.1, T-4.1   Ước lượng: 20′
 - Refs: [FRONTEND.md §12](./FRONTEND.md#12-cấu-hình-chạy--docker)
-- Việc: `frontend/Dockerfile` (build→nginx) + `nginx.conf` (SPA fallback). Thêm service `frontend` vào compose. Xác nhận `CorsConfig` backend cho origin FE.
+- Việc: `FE/Dockerfile` (build→nginx) + `FE/nginx.conf` (SPA fallback). Thêm service `frontend` vào compose. Xác nhận `CorsConfig` backend cho origin FE.
 - DoD: `docker compose up --build` chạy cả frontend+app+db; mở FE gọi được API không lỗi CORS.
+  Root compose dùng Nginx reverse proxy `/api` → `backend:8080`, có healthcheck cho cả ba
+  service và vẫn giữ `BE/compose.yaml` cho workflow chỉ chạy backend.
 
 > **🚩 Milestone M5:** FE chạy full, demo được qua giao diện.
 

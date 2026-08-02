@@ -251,23 +251,24 @@ OPENAI_API_KEY=              # chỉ cần khi LLM_ENABLED=true
 ## 10. Kiến trúc triển khai (Docker)
 
 ```
-┌─────────────────── docker compose ───────────────────┐
-│                                                       │
-│   ┌───────────────┐        ┌────────────────────┐    │
-│   │   app          │  JDBC  │   db (postgres:16) │    │
-│   │ (spring boot)  │───────▶│   volume: pgdata   │    │
-│   │  :8080         │        │   :5432            │    │
-│   └───────┬────────┘        └────────────────────┘    │
-│           │ depends_on: db (healthcheck)              │
-└───────────┼───────────────────────────────────────────┘
-            ▼
-      host :8080 → Swagger UI
+┌──────────────────────── docker compose ────────────────────────┐
+│                                                               │
+│  frontend (Nginx) ── /api ──▶ backend (Spring Boot) ── JDBC ─▶ db │
+│       :80                         :8080                  :5432  │
+│        │                    depends_on healthy            │     │
+│        └──── depends_on backend healthy ──────────────────┘     │
+└────────┬──────────────────────────┬─────────────────────────────┘
+         ▼                          ▼
+ host :5173 → CRM UI         host :8080 → Swagger/API
 ```
 
-- `Dockerfile`: multi-stage (build bằng Maven → chạy trên JRE slim) để image gọn.
-- `db` có **healthcheck**; `app` `depends_on` `db` khoẻ mới start → tránh lỗi kết nối lúc khởi động.
+- `BE/Dockerfile`: multi-stage (Maven → JRE); `FE/Dockerfile`: multi-stage (Node → Nginx).
+- `db`, `backend`, `frontend` đều có healthcheck; service sau chỉ start khi dependency khỏe.
+- Nginx có SPA fallback và reverse proxy `/api` tới `backend:8080`; frontend Docker gọi API
+  same-origin, còn `npm run dev` gọi thẳng `localhost:8080` qua CORS.
 - Flyway migrate tự động lúc app start; schema ở `db/migration`, seed demo ở `db/demo` và chỉ được bật bởi profile `dev`/`docker`.
-- Lệnh demo duy nhất trong thư mục `BE/`: `docker compose up --build`.
+- Lệnh full-stack duy nhất tại root repository: `docker compose up --build`.
+- `BE/compose.yaml` được giữ cho thành viên chỉ muốn chạy backend + database.
 
 ---
 
