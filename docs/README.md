@@ -25,6 +25,7 @@ Hiện tại yêu cầu của khách hàng đến qua email / KakaoTalk / điệ
 | 9 | [TASKS.md](./TASKS.md) | **Task-list triển khai đầy đủ** — chia phase, có owner/phụ thuộc/DoD, giao cho thành viên hoặc AI agent | — |
 | 10 | [BACKEND_CODING_RULES.md](./BACKEND_CODING_RULES.md) | Quy tắc code Java/Spring Boot, layer, security, transaction, test, PR checklist | — |
 | 11 | [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) | Kế hoạch foundation, thứ tự merge, lịch một tuần và checklist điều phối cho leader | — |
+| 12 | [TEAM_DEVELOPMENT_GUIDE.md](./TEAM_DEVELOPMENT_GUIDE.md) | Cài đặt môi trường, bắt đầu feature branch, phối hợp code và checklist PR cho team | — |
 
 > Bản kế hoạch tổng thể (tư duy chiến lược + phân công + kế hoạch phase) nằm ở [`../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md`](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md). Bộ `docs/` này là bản **chuyên sâu từng mảng** để implement và bảo vệ trong Q&A.
 

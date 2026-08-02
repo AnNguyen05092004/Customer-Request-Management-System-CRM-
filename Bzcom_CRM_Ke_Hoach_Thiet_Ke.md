@@ -593,7 +593,7 @@ Mỗi mục map vào một tiêu chí — **không thêm bừa**.
 ```
 main      ← release cuối (chỉ merge từ develop qua PR)
 develop   ← nhánh tích hợp
-feature/{tên}   ← nhánh cá nhân (feature/auth-jwt, feature/request-crud, ...)
+feature/{tên}   ← nhánh cá nhân (feature/auth-member, feature/request-core, ...)
 ```
 
 ### 11.2 Rules (thực thi thật)
