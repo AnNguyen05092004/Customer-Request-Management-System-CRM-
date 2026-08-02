@@ -1,0 +1,62 @@
+name: bzcom-crm
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bzcom_crm}
+      POSTGRES_USER: ${POSTGRES_USER:-bzcom}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bzcom_local_password}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./BE
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-bzcom_crm}
+      DB_USERNAME: ${POSTGRES_USER:-bzcom}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-bzcom_local_password}
+      JWT_SECRET: ${JWT_SECRET:-local-docker-secret-change-before-production-123456}
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./FE
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_REQUEST_DATA_MODE: ${VITE_REQUEST_DATA_MODE:-demo}
+    ports:
+      - "${FRONTEND_HOST_PORT:-5173}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

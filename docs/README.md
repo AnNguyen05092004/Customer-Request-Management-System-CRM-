@@ -12,6 +12,10 @@ Hiện tại yêu cầu của khách hàng đến qua email / KakaoTalk / điệ
 
 ## 2. Chỉ mục tài liệu (đọc theo thứ tự này)
 
+> Trước khi sửa code hoặc tài liệu, đọc [`../CLAUDE.md`](../CLAUDE.md). Đây là working
+> agreement quy định nguồn chuẩn, cách xử lý khi code và docs mâu thuẫn, traceability từ
+> task tới PR và ma trận tài liệu phải đồng bộ theo từng loại thay đổi.
+
 | # | Tài liệu | Nội dung | Dùng cho slide PPT |
 |---|---|---|---|
 | 1 | [ANALYZE.md](./ANALYZE.md) | Phân tích yêu cầu, actor, use case, business rules, acceptance criteria | Slide 2 (Problem) |
@@ -24,8 +28,7 @@ Hiện tại yêu cầu của khách hàng đến qua email / KakaoTalk / điệ
 | 8 | [FRONTEND.md](./FRONTEND.md) | React SPA (Vite + TS + Ant Design) phủ toàn bộ API — lớp demo trực quan | Slide 9 |
 | 9 | [TASKS.md](./TASKS.md) | **Task-list triển khai đầy đủ** — chia phase, có owner/phụ thuộc/DoD, giao cho thành viên hoặc AI agent | — |
 | 10 | [BACKEND_CODING_RULES.md](./BACKEND_CODING_RULES.md) | Quy tắc code Java/Spring Boot, layer, security, transaction, test, PR checklist | — |
-| 11 | [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) | Kế hoạch foundation, thứ tự merge, lịch một tuần và checklist điều phối cho leader | — |
-| 12 | [TEAM_DEVELOPMENT_GUIDE.md](./TEAM_DEVELOPMENT_GUIDE.md) | Cài đặt môi trường, bắt đầu feature branch, phối hợp code và checklist PR cho team | — |
+| 11 | [TEAM_DEVELOPMENT_GUIDE.md](./TEAM_DEVELOPMENT_GUIDE.md) | Cài đặt môi trường, bắt đầu feature branch, phối hợp code và checklist PR cho team | — |
 
 > Bản kế hoạch tổng thể (tư duy chiến lược + phân công + kế hoạch phase) nằm ở [`../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md`](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md). Bộ `docs/` này là bản **chuyên sâu từng mảng** để implement và bảo vệ trong Q&A.
 
@@ -35,7 +38,7 @@ Hiện tại yêu cầu của khách hàng đến qua email / KakaoTalk / điệ
 
 **Backend:** Java 21 (LTS) · Spring Boot 3.5.5 · Spring Security 6 + JWT · Spring Data JPA · PostgreSQL 16 · Flyway · springdoc-openapi (Swagger UI) · MapStruct · Lombok · JUnit 5 · Testcontainers · Spotless · JaCoCo · Docker Compose · GitHub Actions.
 
-**Frontend (lớp demo):** Vite · React 18 · TypeScript · Ant Design · TanStack Query · axios · React Router — chi tiết [FRONTEND.md](./FRONTEND.md).
+**Frontend (lớp demo):** Node.js 22 · Vite 7 · React 19 · TypeScript 5.9 · Ant Design · TanStack Query · axios · React Router — chi tiết [FRONTEND.md](./FRONTEND.md).
 
 Chi tiết & lý do chọn: xem [ARCHITECTURE.md §Tech decisions](./ARCHITECTURE.md#8-nh%E1%BA%ADt-k%C3%BD-quy%E1%BA%BFt-%C4%91%E1%BB%8Bnh-k%E1%BB%B9-thu%E1%BA%ADt-adr).
 
@@ -43,15 +46,16 @@ Chi tiết & lý do chọn: xem [ARCHITECTURE.md §Tech decisions](./ARCHITECTUR
 
 ```bash
 # Yêu cầu: Docker + Docker Compose
-git clone <repo-url> bzcom-crm && cd bzcom-crm/BE
-cp .env.example .env
-docker compose up --build     # app + postgres khởi động, Flyway migrate, seed demo nạp
+git clone <repo-url> bzcom-crm && cd bzcom-crm
+cp .env.example .env          # tùy chọn; compose có default an toàn cho local
+docker compose up --build     # frontend + backend + postgres
 ```
 
 Sau khi lên:
 
 | Thành phần | URL |
 |---|---|
+| CRM Frontend | http://localhost:5173 |
 | Swagger UI (demo API) | http://localhost:8080/swagger-ui.html |
 | OpenAPI JSON | http://localhost:8080/v3/api-docs |
 | Health check | http://localhost:8080/actuator/health |
@@ -96,6 +100,8 @@ Chi tiết mỗi bước: xem [OPENAPI.md](./OPENAPI.md).
 
 ```
 bzcom-crm/
+├── compose.yaml              # full-stack: frontend + backend + PostgreSQL
+├── .env.example              # tùy chọn override port/credential local
 ├── docs/                     # ← bộ tài liệu này
 │   ├── README.md
 │   ├── ANALYZE.md
@@ -108,7 +114,7 @@ bzcom-crm/
 │   ├── GIT_WORKFLOW.md
 │   ├── FRONTEND.md
 │   └── BACKEND_CODING_RULES.md
-├── FE/                       # frontend và UI specification
+├── FE/                       # React SPA + Dockerfile + Nginx config
 ├── BE/                       # Spring Boot backend độc lập
 │   ├── src/main/java/com/bzcom/crm/  # package-by-feature
 │   ├── src/main/resources/
@@ -119,7 +125,7 @@ bzcom-crm/
 │   ├── Dockerfile
 │   ├── mvnw
 │   └── pom.xml
-└── .github/workflows/backend-ci.yml
+└── .github/workflows/        # Backend CI + Frontend CI
 ```
 
 ---
