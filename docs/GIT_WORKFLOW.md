@@ -36,18 +36,18 @@ feature/*  ← nhánh cá nhân, tách từ develop
 
 **Đặt tên feature branch** (khớp phân công 4 người):
 ```
-feature/auth-jwt          (A — auth, member, common, config)
-feature/request-crud      (B — request CRUD, filter, stats)
+feature/auth-member       (A — auth, member, security liên quan)
+feature/request-core      (B — request CRUD, filter, paging, stats)
 feature/workflow-logic    (C — assign, status, history)
 feature/alert-llm         (D — alert, llm, swagger, CI)
 ```
 
 Vòng đời một nhánh:
 ```bash
-git checkout develop && git pull
-git checkout -b feature/request-crud
+git switch develop && git pull --ff-only origin develop
+git switch -c feature/request-core
 # ... code + commit ...
-git push -u origin feature/request-crud
+git push -u origin feature/request-core
 # → mở PR trên GitHub vào develop
 ```
 
@@ -149,7 +149,9 @@ jobs:
 | Develop bị "trôi" xa feature | Rebase/merge `develop` vào feature branch mỗi ngày |
 | Merge dồn phút chót | Merge sớm & nhỏ, không dồn 1 PR khổng lồ cuối dự án |
 
-**Quy tắc vàng:** trước khi bắt đầu ngày làm việc → `git checkout develop && git pull && git checkout feature/xxx && git merge develop`.
+**Quy tắc vàng:** trước khi bắt đầu ngày làm việc, cập nhật `develop`, quay lại feature
+branch rồi merge `develop` vào feature. Xem lệnh đầy đủ và cách xử lý conflict trong
+[TEAM_DEVELOPMENT_GUIDE.md](./TEAM_DEVELOPMENT_GUIDE.md).
 
 ## 8. Chuẩn bị bằng chứng cho slide 10
 
