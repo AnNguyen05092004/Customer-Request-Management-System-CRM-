@@ -17,9 +17,10 @@ public class OpenApiConfig {
     OpenAPI crmOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Bzcom CRM API")
-                        .version("v1")
-                        .description("Customer Request Management System REST API"))
+                        .title("Bzcom CRM — Customer Request Management System API")
+                        .version("1.0.0")
+                        .description("REST API quản lý yêu cầu khách hàng (bug / feature / inquiry) cho Bzcom. "
+                                + "Mọi response dùng envelope {status, message, data}."))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH))
                 .components(new Components()
                         .addSecuritySchemes(

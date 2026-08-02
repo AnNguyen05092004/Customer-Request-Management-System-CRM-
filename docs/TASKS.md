@@ -114,16 +114,16 @@
 - Việc: `OpenApiConfig` (metadata: title, version) + security scheme `bearerAuth` (nút Authorize trên Swagger UI để dán JWT).
 - DoD: `/swagger-ui.html` mở được, có nút "Authorize".
 
-### [ ] T-1.8 — Member domain (entity/repo/service/controller/dto)
+### [x] T-1.8 — Member domain (entity/repo/service/controller/dto)
 - Owner: A   Depends on: T-1.5, T-1.6   Ước lượng: 25′
 - Refs: [openapi.yaml](./openapi.yaml)(Member), [ERD.md](./ERD.md)(members)
 - Việc: `Member` entity (role enum, password BCrypt), `MemberRepository` (findByEmail), `MemberService` (public register luôn gán role `CLIENT`, hash password, chặn email trùng→409; getAll ADMIN; getById chỉ ADMIN hoặc chính member), `MemberController` (`POST /api/members` public 201, `GET /api/members` ADMIN, `GET /api/members/{id}`). Public DTO **không có role**; cấu hình `spring.jackson.deserialization.fail-on-unknown-properties=true` và DTO phải reject field lạ; response không chứa password. MapStruct mapper.
 - DoD: đăng ký member → CLIENT/201; body có `role: ADMIN` → **400** (không âm thầm bỏ qua/không leo quyền); DB lưu hash (không plaintext), response **không** có password; email trùng → 409; GET /members không phải ADMIN → 403; GET member khác mình → 403. + DoD chung.
 
-### [ ] T-1.9 — Auth API (login/refresh/logout)
+### [x] T-1.9 — Auth API (login/refresh/logout)
 - Owner: A   Depends on: T-1.6, T-1.8   Ước lượng: 20′
 - Refs: [openapi.yaml](./openapi.yaml)(Auth), [BUSINESS_LOGIC.md §1.1](./BUSINESS_LOGIC.md#11-luồng-jwt)
-- Việc: thêm `RefreshToken` entity/repository (opaque token hash, expiresAt, revokedAt). `POST /login`: BCrypt → access JWT 15 phút + refresh 7 ngày, lưu hash. `POST /refresh`: chỉ phát cặp mới khi revoke token cũ thành công qua `UPDATE ... WHERE revoked_at IS NULL AND expires_at > now()` (hoặc khóa row token) trong cùng transaction. `POST /logout`: nhận refresh token, revoke idempotent. Login/refresh/logout không phụ thuộc Bearer access token. DTO: LoginRequest, RefreshTokenRequest, TokenResponse.
+- Việc: thêm `RefreshToken` entity/repository (opaque token hash, expiresAt, revokedAt). `POST /login`: BCrypt → access JWT 15 phút + refresh 7 ngày, lưu hash. `POST /refresh`: chỉ phát cặp mới khi revoke token cũ thành công qua `UPDATE ... WHERE revoked_at IS NULL AND expires_at > now()` (hoặc khóa row token) trong cùng transaction. `POST /logout`: nhận refresh token, revoke idempotent. Login/refresh/logout không phụ thuộc Bearer access token. DTO: LoginRequest, RefreshTokenRequest (32–512 ký tự), TokenResponse.
 - DoD: login đúng → 200 + tokens + role; refresh hợp lệ trả cặp mới và token cũ không refresh được; **hai refresh song song trên cùng token chỉ đúng một 200, một 401**; logout → refresh token không dùng lại được; sai password/token hết hạn → 401; access token dùng được cho endpoint bảo vệ. + DoD chung.
 
 ### [ ] T-1.10 — Seed data

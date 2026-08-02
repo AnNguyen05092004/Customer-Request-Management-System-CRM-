@@ -120,7 +120,10 @@ BE/src/main/java/com/bzcom/crm
 │   ├── entity/RefreshToken.java, repository/RefreshTokenRepository.java
 │   └── dto/request/ + dto/response/
 ├── member/                         (A)
-│   └── controller/ service/ repository/ entity/ dto/{request,response}/ mapper/
+│   ├── controller/ service/ repository/ mapper/
+│   ├── entity/Member.java
+│   ├── domain/MemberRole.java, MemberEmail.java
+│   └── dto/{request,response}/
 ├── request/                        (B)
 │   ├── controller/RequestController.java
 │   ├── service/RequestService.java, RequestStatsService.java
@@ -143,7 +146,7 @@ BE/src/main/java/com/bzcom/crm
     └── dto/{request,response}/
 ```
 
-**Giao tiếp giữa module:** qua **interface của service** (vd `workflow` gọi `AlertService.create(...)`, `llm` chỉ expose `LlmService`). Không module nào chạm entity của module khác trực tiếp → giữ ranh giới bounded context.
+**Giao tiếp giữa module:** ưu tiên **public service/interface** của module sở hữu (vd `workflow` gọi `AlertService.create(...)`, `MemberService.recordDeveloperCompletion(...)`; `llm` chỉ expose `LlmService`). JPA relationship có thể tham chiếu entity liên quan (`Request` → `Member`) vì đây là monolith, nhưng module khác không tự sửa field hoặc dùng repository của module sở hữu để thay đổi nghiệp vụ; mutation đi qua domain method/service rõ ràng.
 
 ## 6. Cross-cutting concerns
 

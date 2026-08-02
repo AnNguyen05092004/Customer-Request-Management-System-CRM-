@@ -215,6 +215,7 @@ function createRequest(dto, currentClient):
 | Đối tượng | Luật | Vi phạm |
 |---|---|---|
 | Login | email đúng định dạng, password không rỗng | 400 |
+| Refresh/logout | refresh token 32–512 ký tự, field lạ bị reject | 400 |
 | Member create | email unique + đúng format, password 4–72 ký tự, name 1–100 ký tự; DTO công khai không có `role`, field lạ bị reject | 400 / 409 (trùng email) |
 | Request create | title không rỗng (≤200), category ∈ enum, priority ∈ enum | 400 |
 | Status update | status ∈ enum | 400 (sai enum) / 409 (transition sai) |

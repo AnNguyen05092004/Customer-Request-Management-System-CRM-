@@ -104,6 +104,7 @@ public ResponseEntity<ApiResponse<RequestResponse>> updateStatus(
 ### Refresh token
 
 - Access JWT 15 phút; opaque refresh token 7 ngày từ `SecureRandom`.
+- DTO refresh/logout chấp nhận token 32–512 ký tự và reject field lạ; token hệ thống sinh hiện tại dài 43 ký tự.
 - Chỉ SHA-256 hash refresh token được lưu. Không log raw refresh token.
 - Refresh rotation phải atomic: conditional revoke `revoked_at IS NULL AND expires_at > now()` hoặc lock đúng row token. Chỉ khi exactly one row bị revoke mới phát cặp token mới.
 - Logout idempotent: revoke nếu token tồn tại, luôn trả 200 hợp lệ.
