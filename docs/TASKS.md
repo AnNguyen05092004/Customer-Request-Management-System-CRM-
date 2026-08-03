@@ -218,7 +218,7 @@
 
 ## PHASE 3 — LLM + Statistics (E, ~40′)
 
-### [ ] T-3.1 — LlmService interface + MockLlmService
+### [x] T-3.1 — LlmService interface + MockLlmService
 - Owner: E   Depends on: M2   Ước lượng: 20′
 - Refs: [LLM.md §5,§6,§7](./LLM.md#6-mock-mode-chống-chết-demo)
 - Việc: `LlmService` interface (`classify`, `suggestPriority`, `summarize`). `MockLlmService` (`@ConditionalOnProperty llm.enabled=false`, keyword-based) triển khai đủ ba method. DTO: `ClassifyResult`, `PriorityResult`. Cấu hình `llm.*` trong application.yml.
@@ -229,6 +229,7 @@
 - Refs: [LLM.md §3,§5](./LLM.md#3-thiết-kế-prompt--auto-classify)
 - Việc: triển khai `POST /api/requests/classify`, `POST /api/requests/suggest-priority`, `GET /api/requests/{id}/summary`. `OpenAiLlmService` (`@ConditionalOnProperty llm.enabled=true`) gọi API thật với prompt cấu trúc; parse JSON an toàn; timeout/lỗi → fallback. Summary phải kiểm `RequestAccessPolicy` trước khi gửi description cho LLM.
 - DoD: classify/priority (mock) trả enum + confidence + reason; summary chỉ 1–2 câu và chặn request không thuộc quyền bằng 403; LLM lỗi → fallback không làm chết API (200); prompt lưu trong `prompt/`. + DoD chung.
+- Trạng thái: `classify`/`suggest-priority` (Mock + OpenAiLlmService thật, prompt trong `llm/prompt/`, fallback rule-based) đã xong và có test. `GET /api/requests/{id}/summary` còn thiếu vì cần `Request` entity + `RequestAccessPolicy` (T-2.B1, chưa tồn tại trong repo — package `request/` mới chỉ có `package-info.java`). `LlmService.summarize(RequestSummaryInput)` đã implement sẵn ở cả hai service, chỉ còn thiếu controller wiring khi B merge entity.
 
 ### [ ] T-3.3 — Statistics API
 - Owner: E   Depends on: M2   Ước lượng: 25′
