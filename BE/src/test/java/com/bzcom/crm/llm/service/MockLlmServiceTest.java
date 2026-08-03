@@ -25,8 +25,7 @@ class MockLlmServiceTest {
 
     @Test
     void classifiesEverythingElseAsInquiry() {
-        assertThat(service.classify("Cho tôi hỏi cách đổi mật khẩu").category())
-                .isEqualTo(Category.INQUIRY);
+        assertThat(service.classify("Cho tôi hỏi cách đổi mật khẩu").category()).isEqualTo(Category.INQUIRY);
     }
 
     @Test

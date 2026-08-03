@@ -32,7 +32,9 @@ public class LlmController {
     @Operation(summary = "Tự phân loại category từ description")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200", description = "Kết quả phân loại", useReturnTypeSchema = true),
+                responseCode = "200",
+                description = "Kết quả phân loại",
+                useReturnTypeSchema = true),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
                 description = "Dữ liệu không hợp lệ",
@@ -50,7 +52,9 @@ public class LlmController {
     @Operation(summary = "Gợi ý priority từ description")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                responseCode = "200", description = "Priority gợi ý", useReturnTypeSchema = true),
+                responseCode = "200",
+                description = "Priority gợi ý",
+                useReturnTypeSchema = true),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
                 description = "Dữ liệu không hợp lệ",
