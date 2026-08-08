@@ -2,12 +2,11 @@ package com.bzcom.crm.llm;
 
 import com.bzcom.crm.llm.dto.ClassifyResult;
 import com.bzcom.crm.llm.dto.PriorityResult;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-
-import java.util.Map;
 
 @Service
 @ConditionalOnProperty(name = "llm.enabled", havingValue = "true")
@@ -16,8 +15,8 @@ public class OpenAiLlmService implements LlmService {
     private final RestClient restClient;
     private final String model;
 
-    public OpenAiLlmService(@Value("${llm.openai.api-key}") String apiKey,
-                             @Value("${llm.openai.model:gpt-4o-mini}") String model) {
+    public OpenAiLlmService(
+            @Value("${llm.openai.api-key}") String apiKey, @Value("${llm.openai.model:gpt-4o-mini}") String model) {
         this.model = model;
         this.restClient = RestClient.builder()
                 .baseUrl("https://api.openai.com/v1")
@@ -27,21 +26,25 @@ public class OpenAiLlmService implements LlmService {
 
     @Override
     public ClassifyResult classify(String description) {
-        String prompt = """
+        String prompt =
+                """
             Phân loại yêu cầu sau vào một trong 3 loại: BUG, FEATURE, INQUIRY.
             Trả lời CHỈ bằng JSON: {"category": "...", "confidence": 0.0, "reasoning": "..."}
             Mô tả: %s
-            """.formatted(description);
+            """
+                        .formatted(description);
         return callAndParse(prompt, ClassifyResult.class);
     }
 
     @Override
     public PriorityResult suggestPriority(String description) {
-        String prompt = """
+        String prompt =
+                """
             Đánh giá mức độ ưu tiên của yêu cầu sau: HIGH, MEDIUM, hoặc LOW.
             Trả lời CHỈ bằng JSON: {"priority": "...", "confidence": 0.0, "reasoning": "..."}
             Mô tả: %s
-            """.formatted(description);
+            """
+                        .formatted(description);
         return callAndParse(prompt, PriorityResult.class);
     }
 
@@ -52,15 +55,10 @@ public class OpenAiLlmService implements LlmService {
     }
 
     private String callChat(String prompt) {
-        Map<String, Object> body = Map.of(
-                "model", model,
-                "messages", java.util.List.of(Map.of("role", "user", "content", prompt))
-        );
-        Map<?, ?> response = restClient.post()
-                .uri("/chat/completions")
-                .body(body)
-                .retrieve()
-                .body(Map.class);
+        Map<String, Object> body =
+                Map.of("model", model, "messages", java.util.List.of(Map.of("role", "user", "content", prompt)));
+        Map<?, ?> response =
+                restClient.post().uri("/chat/completions").body(body).retrieve().body(Map.class);
         var choices = (java.util.List<?>) response.get("choices");
         var message = (Map<?, ?>) ((Map<?, ?>) choices.get(0)).get("message");
         return (String) message.get("content");
