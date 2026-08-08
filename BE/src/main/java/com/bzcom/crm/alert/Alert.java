@@ -1,15 +1,26 @@
 package com.bzcom.crm.alert;
 
-import com.bzcom.crm.common.entity.BaseTimeEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Table(name = "alerts")
 @Getter
 @NoArgsConstructor
-public class Alert extends BaseTimeEntity {
+@EntityListeners(AuditingEntityListener.class)
+public class Alert {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,6 +42,10 @@ public class Alert extends BaseTimeEntity {
     @Column(name = "is_read", nullable = false)
     private boolean isRead = false;
 
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
     public Alert(Long requestId, Long targetMemberId, AlertType alertType, String message) {
         this.requestId = requestId;
         this.targetMemberId = targetMemberId;
@@ -39,6 +54,6 @@ public class Alert extends BaseTimeEntity {
     }
 
     public void markRead() {
-        this.isRead = true;
+        isRead = true;
     }
 }
