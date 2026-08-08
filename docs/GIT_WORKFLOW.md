@@ -85,8 +85,8 @@ Format: `type: mô tả ngắn (tiếng Anh hoặc Việt, thì hiện tại)`
 Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và** `develop`:
 - ☑ Require a pull request before merging
 - ☑ Require approvals: **1**
-- ☑ Require status checks to pass (chọn `Backend CI / verify` và
-  `Frontend CI / verify`)
+- ☑ Require status checks to pass (chọn `Backend verify` và `Frontend verify` từ
+  GitHub Actions)
 - ☑ Do not allow bypassing the above settings
 - ☑ Restrict who can push (không ai push trực tiếp)
 
@@ -96,10 +96,13 @@ Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và
 
 Hai workflow chạy trên **mỗi PR/push** vào `develop`/`main`:
 
-- `.github/workflows/backend-ci.yml` → status check `Backend CI / verify`, chạy
+- `.github/workflows/backend-ci.yml` → status check `Backend verify`, chạy
   `BE/./mvnw -B verify`;
-- `.github/workflows/frontend-ci.yml` → status check `Frontend CI / verify`, chạy
+- `.github/workflows/frontend-ci.yml` → status check `Frontend verify`, chạy
   `npm ci` và `npm run verify` trong `FE/`.
+
+Tên job/check phải duy nhất giữa các workflow. Không đặt cả hai job cùng tên `verify`, vì
+branch protection sẽ không thể hiện rõ backend và frontend là hai điều kiện độc lập.
 
 Workflow backend có cấu trúc chính:
 
@@ -109,7 +112,8 @@ on:
   pull_request:
     branches: [main, develop]
 jobs:
-  verify:
+  backend-verify:
+    name: Backend verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

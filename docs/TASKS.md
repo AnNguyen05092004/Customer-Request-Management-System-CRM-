@@ -260,7 +260,7 @@
 - Việc: duy trì `backend-ci.yml` chạy Maven verify và `frontend-ci.yml` chạy npm verify
   trên PR/push vào `develop`/`main`; GitHub-hosted runner dùng Docker cho Testcontainers
   PostgreSQL. Gắn cả hai required status check vào branch protection.
-- DoD: mở PR → `Backend CI / verify` và `Frontend CI / verify` đều chạy; PR fail một
+- DoD: mở PR → `Backend verify` và `Frontend verify` đều chạy; PR fail một
   quality gate không merge được; badge CI xanh trên README.
 
 ### [ ] T-4.4 — Endpoint/lệnh reset demo
@@ -289,7 +289,7 @@
 - Việc: dựng Vite + React + TypeScript trực tiếp trong `FE/` (giữ `FE/ui_design_specification/`); cài antd, @tanstack/react-query, axios, react-router-dom. Tạo `apiClient.ts` (interceptor JWT + refresh single-flight + unwrap envelope), `queryClient.ts`, `types/api.ts` (§5), `AuthContext` + route guard, `AppLayout` + providers, `.env.example`, lint/typecheck/test/build scripts.
 - DoD: `npm run dev` chạy `:5173`; app render layout; chưa login → redirect `/login`.
   Hoàn tất thêm lint/typecheck/Vitest/build gate, explicit Request demo mode và workflow
-  `Frontend CI / verify`.
+  `Frontend verify`.
 
 ### [x] T-5.2 — LoginPage
 - Owner: FE   Depends on: T-5.1, T-1.9   Ước lượng: 20′
