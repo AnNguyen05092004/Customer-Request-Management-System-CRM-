@@ -45,7 +45,11 @@ public class RequestHistory {
     private Instant changedAt;
 
     public RequestHistory(
-            Long requestId, Long changedBy, RequestStatus fromStatus, RequestStatus toStatus, String memo) {
+            Long requestId,
+            Long changedBy,
+            RequestStatus fromStatus,
+            RequestStatus toStatus,
+            String memo) {
         this.requestId = requestId;
         this.changedBy = changedBy;
         this.fromStatus = fromStatus;
