@@ -44,7 +44,8 @@ public class RequestHistory {
     @Column(name = "changed_at", nullable = false)
     private Instant changedAt;
 
-    public RequestHistory(Long requestId, Long changedBy, RequestStatus fromStatus, RequestStatus toStatus, String memo) {
+    public RequestHistory(
+            Long requestId, Long changedBy, RequestStatus fromStatus, RequestStatus toStatus, String memo) {
         this.requestId = requestId;
         this.changedBy = changedBy;
         this.fromStatus = fromStatus;

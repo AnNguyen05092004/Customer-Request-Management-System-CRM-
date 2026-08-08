@@ -5,6 +5,4 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 public record StatusUpdateRequest(
-        @NotNull RequestStatus status,
-        String memo,
-        @NotNull @Min(0) Integer expectedVersion) {}
+        @NotNull RequestStatus status, String memo, @NotNull @Min(0) Integer expectedVersion) {}

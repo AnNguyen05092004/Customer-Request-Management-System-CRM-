@@ -31,7 +31,8 @@ public class HistoryService {
     public List<HistoryResponse> getHistory(Long requestId, CurrentUser currentUser) {
         Request request = requestRepository
                 .findById(requestId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Request not found: " + requestId));
+                .orElseThrow(
+                        () -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Request not found: " + requestId));
 
         RequestAccessPolicy.assertCanRead(request, currentUser);
 

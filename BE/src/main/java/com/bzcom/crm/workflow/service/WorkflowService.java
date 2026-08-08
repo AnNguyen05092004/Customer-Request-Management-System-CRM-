@@ -36,12 +36,14 @@ public class WorkflowService {
     public RequestResponse assign(Long requestId, AssignRequest dto, CurrentUser currentUser) {
         Request request = requestRepository
                 .findById(requestId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Request not found: " + requestId));
+                .orElseThrow(
+                        () -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Request not found: " + requestId));
 
         if (!request.getVersion().equals(dto.expectedVersion())) {
             throw new BusinessException(
                     ErrorCode.CONFLICT,
-                    "Request version conflict: expected " + dto.expectedVersion() + " but found " + request.getVersion());
+                    "Request version conflict: expected " + dto.expectedVersion() + " but found "
+                            + request.getVersion());
         }
 
         Member chosenDev;
@@ -50,7 +52,8 @@ public class WorkflowService {
         if (Boolean.TRUE.equals(dto.auto())) {
             List<Member> developers = memberRepository.findAllByRoleForUpdate(MemberRole.DEVELOPER);
             if (developers.isEmpty()) {
-                throw new BusinessException(ErrorCode.NO_DEVELOPER_AVAILABLE, "No developer available for auto-assignment");
+                throw new BusinessException(
+                        ErrorCode.NO_DEVELOPER_AVAILABLE, "No developer available for auto-assignment");
             }
 
             chosenDev = selectAutoAssignDeveloper(developers);
@@ -86,7 +89,8 @@ public class WorkflowService {
     public RequestResponse updateStatus(Long requestId, StatusUpdateRequest dto, CurrentUser currentUser) {
         Request request = requestRepository
                 .findById(requestId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Request not found: " + requestId));
+                .orElseThrow(
+                        () -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Request not found: " + requestId));
 
         if (currentUser.role() != MemberRole.ADMIN
                 && !currentUser.memberId().equals(request.getAssignedDeveloperId())) {
@@ -96,7 +100,8 @@ public class WorkflowService {
         if (!request.getVersion().equals(dto.expectedVersion())) {
             throw new BusinessException(
                     ErrorCode.CONFLICT,
-                    "Request version conflict: expected " + dto.expectedVersion() + " but found " + request.getVersion());
+                    "Request version conflict: expected " + dto.expectedVersion() + " but found "
+                            + request.getVersion());
         }
 
         if (request.getAssignedDeveloperId() == null) {
@@ -105,8 +110,7 @@ public class WorkflowService {
 
         if (!request.getStatus().canTransitionTo(dto.status())) {
             throw new BusinessException(
-                    ErrorCode.CONFLICT,
-                    "Invalid status transition: " + request.getStatus() + " -> " + dto.status());
+                    ErrorCode.CONFLICT, "Invalid status transition: " + request.getStatus() + " -> " + dto.status());
         }
 
         RequestStatus oldStatus = request.getStatus();
@@ -116,8 +120,8 @@ public class WorkflowService {
         if (dto.status() == RequestStatus.DONE) {
             Member assignedDev = memberRepository
                     .findById(request.getAssignedDeveloperId())
-                    .orElseThrow(() -> new BusinessException(
-                            ErrorCode.RESOURCE_NOT_FOUND, "Assigned developer not found"));
+                    .orElseThrow(
+                            () -> new BusinessException(ErrorCode.RESOURCE_NOT_FOUND, "Assigned developer not found"));
             assignedDev.recordCompletion(Instant.now());
             memberRepository.save(assignedDev);
         }
@@ -137,14 +141,10 @@ public class WorkflowService {
 
         List<DevTaskCount> counts = developers.stream()
                 .map(dev -> new DevTaskCount(
-                        dev,
-                        requestRepository.countByAssignedDeveloperIdAndStatusNot(dev.getId(), RequestStatus.DONE)))
+                        dev, requestRepository.countByAssignedDeveloperIdAndStatusNot(dev.getId(), RequestStatus.DONE)))
                 .toList();
 
-        long minCount = counts.stream()
-                .mapToLong(DevTaskCount::taskCount)
-                .min()
-                .orElse(0L);
+        long minCount = counts.stream().mapToLong(DevTaskCount::taskCount).min().orElse(0L);
 
         List<Member> tied = counts.stream()
                 .filter(dtc -> dtc.taskCount() == minCount)

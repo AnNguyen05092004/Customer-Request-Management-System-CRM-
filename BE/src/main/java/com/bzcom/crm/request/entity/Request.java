@@ -58,7 +58,8 @@ public class Request extends BaseTimeEntity {
     @Column(nullable = false)
     private Integer version;
 
-    public Request(String title, String description, RequestCategory category, RequestPriority priority, Long clientId) {
+    public Request(
+            String title, String description, RequestCategory category, RequestPriority priority, Long clientId) {
         this.title = title;
         this.description = description;
         this.category = category;

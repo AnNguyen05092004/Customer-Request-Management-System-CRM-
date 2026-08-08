@@ -38,12 +38,8 @@ public class RequestService {
 
     @Transactional
     public RequestResponse create(RequestCreateRequest dto, CurrentUser currentUser) {
-        Request request = new Request(
-                dto.title(),
-                dto.description(),
-                dto.category(),
-                dto.priority(),
-                currentUser.memberId());
+        Request request =
+                new Request(dto.title(), dto.description(), dto.category(), dto.priority(), currentUser.memberId());
         Request saved = requestRepository.save(request);
 
         if (saved.getPriority() == RequestPriority.HIGH) {

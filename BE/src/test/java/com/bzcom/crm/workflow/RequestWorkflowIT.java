@@ -100,10 +100,12 @@ class RequestWorkflowIT {
     }
 
     @Test
-    @DisplayName("End-to-End Workflow: Create request -> Auto Assign -> Status PENDING->IN_PROGRESS->DONE -> History & Alert")
+    @DisplayName(
+            "End-to-End Workflow: Create request -> Auto Assign -> Status PENDING->IN_PROGRESS->DONE -> History & Alert")
     void testEndToEndWorkflow() throws Exception {
         // 1. Client 1 creates a HIGH priority request
-        RequestCreateRequest createReq = new RequestCreateRequest("Login bug", "Returns 500 error", RequestCategory.BUG, RequestPriority.HIGH);
+        RequestCreateRequest createReq =
+                new RequestCreateRequest("Login bug", "Returns 500 error", RequestCategory.BUG, RequestPriority.HIGH);
         MvcResult createRes = mockMvc.perform(post("/api/requests")
                         .header("Authorization", "Bearer " + client1Token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -114,7 +116,9 @@ class RequestWorkflowIT {
                 .andExpect(jsonPath("$.data.version").value(0))
                 .andReturn();
 
-        JsonNode reqData = objectMapper.readTree(createRes.getResponse().getContentAsString()).path("data");
+        JsonNode reqData = objectMapper
+                .readTree(createRes.getResponse().getContentAsString())
+                .path("data");
         long requestId = reqData.path("id").asLong();
 
         // Verify alert created for Admin due to HIGH priority
@@ -135,7 +139,9 @@ class RequestWorkflowIT {
 
         // Verify alert created for Dev 1
         Integer dev1AlertCount = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM alerts WHERE target_member_id = ? AND alert_type = 'ASSIGNED'", Integer.class, dev1Member.getId());
+                "SELECT count(*) FROM alerts WHERE target_member_id = ? AND alert_type = 'ASSIGNED'",
+                Integer.class,
+                dev1Member.getId());
         assertThat(dev1AlertCount).isEqualTo(1);
 
         // 3. Dev 1 updates status: PENDING -> IN_PROGRESS
@@ -178,7 +184,8 @@ class RequestWorkflowIT {
     @DisplayName("Role Access Matrix & Error Scenarios")
     void testAccessMatrixAndErrors() throws Exception {
         // Create request by Client 1
-        RequestCreateRequest createReq = new RequestCreateRequest("Feature request", "Add dark mode", RequestCategory.FEATURE, RequestPriority.LOW);
+        RequestCreateRequest createReq = new RequestCreateRequest(
+                "Feature request", "Add dark mode", RequestCategory.FEATURE, RequestPriority.LOW);
         MvcResult createRes = mockMvc.perform(post("/api/requests")
                         .header("Authorization", "Bearer " + client1Token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -186,11 +193,14 @@ class RequestWorkflowIT {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        long requestId = objectMapper.readTree(createRes.getResponse().getContentAsString()).path("data").path("id").asLong();
+        long requestId = objectMapper
+                .readTree(createRes.getResponse().getContentAsString())
+                .path("data")
+                .path("id")
+                .asLong();
 
         // Client 2 trying to view Client 1's request detail -> 403
-        mockMvc.perform(get("/api/requests/" + requestId)
-                        .header("Authorization", "Bearer " + client2Token))
+        mockMvc.perform(get("/api/requests/" + requestId).header("Authorization", "Bearer " + client2Token))
                 .andExpect(status().isForbidden());
 
         // Dev 1 trying to update status BEFORE request is assigned -> 409
