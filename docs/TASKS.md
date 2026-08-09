@@ -216,25 +216,27 @@
 
 ---
 
-## PHASE 3 — LLM + Statistics (D, B, ~40′)
+## PHASE 3 — LLM + Statistics (E, ~40′)
 
-### [ ] T-3.1 — LlmService interface + MockLlmService
-- Owner: D   Depends on: M2   Ước lượng: 20′
+### [x] T-3.1 — LlmService interface + MockLlmService
+- Owner: E   Depends on: M2   Ước lượng: 20′
 - Refs: [LLM.md §5,§6,§7](./LLM.md#6-mock-mode-chống-chết-demo)
 - Việc: `LlmService` interface (`classify`, `suggestPriority`, `summarize`). `MockLlmService` (`@ConditionalOnProperty llm.enabled=false`, keyword-based) triển khai đủ ba method. DTO: `ClassifyResult`, `PriorityResult`. Cấu hình `llm.*` trong application.yml.
 - DoD: `llm.enabled=false` → dùng mock, không gọi mạng; test mock trả đúng theo keyword.
 
-### [ ] T-3.2 — LLM APIs (+ fallback) & OpenAiLlmService
-- Owner: D   Depends on: T-3.1   Ước lượng: 25′
+### [x] T-3.2 — LLM APIs (+ fallback) & GeminiLlmService
+- Owner: E   Depends on: T-3.1   Ước lượng: 25′
 - Refs: [LLM.md §3,§5](./LLM.md#3-thiết-kế-prompt--auto-classify)
-- Việc: triển khai `POST /api/requests/classify`, `POST /api/requests/suggest-priority`, `GET /api/requests/{id}/summary`. `OpenAiLlmService` (`@ConditionalOnProperty llm.enabled=true`) gọi API thật với prompt cấu trúc; parse JSON an toàn; timeout/lỗi → fallback. Summary phải kiểm `RequestAccessPolicy` trước khi gửi description cho LLM.
+- Việc: triển khai `POST /api/requests/classify`, `POST /api/requests/suggest-priority`, `GET /api/requests/{id}/summary`. `GeminiLlmService` (`@ConditionalOnProperty llm.enabled=true`) gọi API thật (Gemini, qua endpoint tương thích OpenAI Chat Completions) với prompt cấu trúc; parse JSON an toàn; timeout/lỗi → fallback. Summary phải kiểm `RequestAccessPolicy` trước khi gửi description cho LLM.
 - DoD: classify/priority (mock) trả enum + confidence + reason; summary chỉ 1–2 câu và chặn request không thuộc quyền bằng 403; LLM lỗi → fallback không làm chết API (200); prompt lưu trong `prompt/`. + DoD chung.
+- Trạng thái: xong toàn bộ sau khi B merge `Request` entity + `RequestAccessPolicy` (T-2.B1). `GET /{id}/summary` tái sử dụng `RequestService.getRequestDetail` (đã check `RequestAccessPolicy` → 403/404 sẵn). Đã gỡ một bản LLM khác do D merge trùng vào `develop` (thiếu fallback/timeout/test, sai contract endpoint `/summarize`) — xem PR #5. Provider thật đổi từ OpenAI sang Gemini (key OpenAI hết credit, team có key Gemini hoạt động) — đã verify bằng gọi API thật với prompt thật, phát hiện và sửa lỗi Gemini bọc JSON trong markdown code fence (khác OpenAI), có test regression.
 
 ### [ ] T-3.3 — Statistics API
-- Owner: B   Depends on: M2   Ước lượng: 25′
+- Owner: E   Depends on: M2   Ước lượng: 25′
 - Refs: [BUSINESS_LOGIC.md §6](./BUSINESS_LOGIC.md#6-statistics), [openapi.yaml](./openapi.yaml)(StatsResponse)
 - Việc: `GET /api/requests/stats` (ADMIN). total, completed, completionRate (total=0→0, tránh chia 0), byCategory (group), byDeveloper (assignedCount + doneCount).
 - DoD: số liệu đúng với seed data; total=0 không lỗi; role khác → 403. + DoD chung.
+- Trạng thái: `RequestStatsService` + `GET /api/requests/stats` (thêm vào `RequestController`, `@PreAuthorize("hasRole('ADMIN')")`) đã code xong, có unit test cho logic tổng hợp (total=0 → completionRate=0; byCategory/byDeveloper). CI thật (GitHub Actions, PR #5) đã chạy full `mvn -B verify` bao gồm integration test Testcontainers PostgreSQL (`AuthMemberIT`, `FoundationIT`, `RequestWorkflowIT`) — tất cả xanh, nên môi trường/schema không phải vấn đề. Giữ `[ ]` vì còn 1 phần DoD chưa có test riêng: chưa có integration test xác nhận cụ thể role khác ADMIN → 403 cho đúng endpoint `/stats` (đã thử ở mức `@WebMvcTest` nhưng `@PreAuthorize` không enforce trong slice đó — cần IT thật, xem PR #5).
 
 > **🚩 Milestone M3:** backend hoàn chỉnh tính năng. Tag `v0.9-backend`.
 

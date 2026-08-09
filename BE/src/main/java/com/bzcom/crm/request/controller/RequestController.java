@@ -8,7 +8,9 @@ import com.bzcom.crm.request.domain.RequestPriority;
 import com.bzcom.crm.request.domain.RequestStatus;
 import com.bzcom.crm.request.dto.request.RequestCreateRequest;
 import com.bzcom.crm.request.dto.response.RequestResponse;
+import com.bzcom.crm.request.dto.response.StatsResponse;
 import com.bzcom.crm.request.service.RequestService;
+import com.bzcom.crm.request.service.RequestStatsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -33,9 +35,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class RequestController {
 
     private final RequestService requestService;
+    private final RequestStatsService requestStatsService;
 
-    public RequestController(RequestService requestService) {
+    public RequestController(RequestService requestService, RequestStatsService requestStatsService) {
         this.requestService = requestService;
+        this.requestStatsService = requestStatsService;
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -64,5 +68,12 @@ public class RequestController {
     public ApiResponse<RequestResponse> getDetail(
             @PathVariable Long id, @AuthenticationPrincipal CurrentUser currentUser) {
         return ApiResponse.ok(requestService.getRequestDetail(id, currentUser));
+    }
+
+    @GetMapping("/stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Thống kê (ADMIN only) — tổng, completion rate, theo category, theo developer")
+    public ApiResponse<StatsResponse> getStats() {
+        return ApiResponse.ok(requestStatsService.getStats());
     }
 }

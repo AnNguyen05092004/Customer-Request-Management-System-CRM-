@@ -48,3 +48,7 @@ crm:
 
 llm:
   enabled: ${LLM_ENABLED:false}
+  provider: gemini
+  model: gemini-2.5-flash
+  timeout-ms: 5000
+  api-key: ${GEMINI_API_KEY:}
