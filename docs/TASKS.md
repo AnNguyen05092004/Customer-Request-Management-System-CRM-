@@ -224,12 +224,12 @@
 - Việc: `LlmService` interface (`classify`, `suggestPriority`, `summarize`). `MockLlmService` (`@ConditionalOnProperty llm.enabled=false`, keyword-based) triển khai đủ ba method. DTO: `ClassifyResult`, `PriorityResult`. Cấu hình `llm.*` trong application.yml.
 - DoD: `llm.enabled=false` → dùng mock, không gọi mạng; test mock trả đúng theo keyword.
 
-### [x] T-3.2 — LLM APIs (+ fallback) & OpenAiLlmService
+### [x] T-3.2 — LLM APIs (+ fallback) & GeminiLlmService
 - Owner: E   Depends on: T-3.1   Ước lượng: 25′
 - Refs: [LLM.md §3,§5](./LLM.md#3-thiết-kế-prompt--auto-classify)
-- Việc: triển khai `POST /api/requests/classify`, `POST /api/requests/suggest-priority`, `GET /api/requests/{id}/summary`. `OpenAiLlmService` (`@ConditionalOnProperty llm.enabled=true`) gọi API thật với prompt cấu trúc; parse JSON an toàn; timeout/lỗi → fallback. Summary phải kiểm `RequestAccessPolicy` trước khi gửi description cho LLM.
+- Việc: triển khai `POST /api/requests/classify`, `POST /api/requests/suggest-priority`, `GET /api/requests/{id}/summary`. `GeminiLlmService` (`@ConditionalOnProperty llm.enabled=true`) gọi API thật (Gemini, qua endpoint tương thích OpenAI Chat Completions) với prompt cấu trúc; parse JSON an toàn; timeout/lỗi → fallback. Summary phải kiểm `RequestAccessPolicy` trước khi gửi description cho LLM.
 - DoD: classify/priority (mock) trả enum + confidence + reason; summary chỉ 1–2 câu và chặn request không thuộc quyền bằng 403; LLM lỗi → fallback không làm chết API (200); prompt lưu trong `prompt/`. + DoD chung.
-- Trạng thái: xong toàn bộ sau khi B merge `Request` entity + `RequestAccessPolicy` (T-2.B1). `GET /{id}/summary` tái sử dụng `RequestService.getRequestDetail` (đã check `RequestAccessPolicy` → 403/404 sẵn). Đã gỡ một bản LLM khác do D merge trùng vào `develop` (thiếu fallback/timeout/test, sai contract endpoint `/summarize`) — xem PR #5 để biết chi tiết lý do thay thế.
+- Trạng thái: xong toàn bộ sau khi B merge `Request` entity + `RequestAccessPolicy` (T-2.B1). `GET /{id}/summary` tái sử dụng `RequestService.getRequestDetail` (đã check `RequestAccessPolicy` → 403/404 sẵn). Đã gỡ một bản LLM khác do D merge trùng vào `develop` (thiếu fallback/timeout/test, sai contract endpoint `/summarize`) — xem PR #5. Provider thật đổi từ OpenAI sang Gemini (key OpenAI hết credit, team có key Gemini hoạt động) — đã verify bằng gọi API thật với prompt thật, phát hiện và sửa lỗi Gemini bọc JSON trong markdown code fence (khác OpenAI), có test regression.
 
 ### [ ] T-3.3 — Statistics API
 - Owner: E   Depends on: M2   Ước lượng: 25′
