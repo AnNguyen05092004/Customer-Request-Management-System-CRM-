@@ -21,15 +21,15 @@ import org.springframework.web.client.RestClient;
 
 @Service
 @ConditionalOnProperty(name = "llm.enabled", havingValue = "true")
-public class OpenAiLlmService implements LlmService {
+public class GeminiLlmService implements LlmService {
 
-    private static final Logger log = LoggerFactory.getLogger(OpenAiLlmService.class);
+    private static final Logger log = LoggerFactory.getLogger(GeminiLlmService.class);
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final String model;
 
-    public OpenAiLlmService(RestClient restClient, ObjectMapper objectMapper, LlmProperties properties) {
+    public GeminiLlmService(RestClient restClient, ObjectMapper objectMapper, LlmProperties properties) {
         this.restClient = restClient;
         this.objectMapper = objectMapper;
         this.model = properties.model();
@@ -87,7 +87,24 @@ public class OpenAiLlmService implements LlmService {
                         Map.of("role", "user", "content", userPrompt)));
         JsonNode response =
                 restClient.post().uri("/chat/completions").body(body).retrieve().body(JsonNode.class);
-        return response.at("/choices/0/message/content").asText();
+        return stripMarkdownCodeFence(response.at("/choices/0/message/content").asText());
+    }
+
+    /**
+     * Gemini (unlike OpenAI) often wraps its JSON answer in a ```json ... ``` markdown fence
+     * even when the prompt asks for raw JSON only; strip it so parsing doesn't fail and fall
+     * back to the rule-based result on every call.
+     */
+    private static String stripMarkdownCodeFence(String content) {
+        String trimmed = content.trim();
+        if (trimmed.startsWith("```")) {
+            int firstNewline = trimmed.indexOf('\n');
+            int fenceEnd = trimmed.lastIndexOf("```");
+            if (firstNewline != -1 && fenceEnd > firstNewline) {
+                return trimmed.substring(firstNewline + 1, fenceEnd).trim();
+            }
+        }
+        return trimmed;
     }
 
     private ClassifyResult ruleBasedClassifyFallback(String description) {

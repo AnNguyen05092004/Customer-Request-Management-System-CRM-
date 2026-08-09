@@ -146,9 +146,9 @@ public interface LlmService {
 | Impl | Kích hoạt | Vai trò |
 |---|---|---|
 | `MockLlmService` | `llm.enabled=false` (mặc định) | Demo an toàn, test cho cả 3 tác vụ |
-| `OpenAiLlmService` | `llm.enabled=true` | Gọi OpenAI API thật cho cả 3 tác vụ |
+| `GeminiLlmService` | `llm.enabled=true` | Gọi Gemini API thật (qua endpoint tương thích OpenAI Chat Completions của Google) cho cả 3 tác vụ |
 
-Đổi sang Claude chỉ cần thêm `ClaudeLlmService implements LlmService` — controller/service không đổi (Dependency Inversion). Đây là ADR-08.
+Đổi provider (vd Claude, OpenAI) chỉ cần thêm class mới `implements LlmService` — controller/service không đổi (Dependency Inversion). Đây là ADR-08. `GeminiLlmService` gọi `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions` — cùng schema request/response với OpenAI Chat Completions nên logic gọi API/parse JSON dùng chung được nếu sau này đổi provider.
 
 ## 8. Cấu hình & bảo mật
 
@@ -156,16 +156,16 @@ public interface LlmService {
 # application.yml
 llm:
   enabled: ${LLM_ENABLED:false}
-  provider: openai
-  model: gpt-4o-mini          # model nhỏ, rẻ, đủ cho phân loại
+  provider: gemini
+  model: gemini-2.5-flash     # model nhỏ, miễn phí ở mức demo, đủ cho phân loại
   timeout-ms: 5000
-  api-key: ${OPENAI_API_KEY:} # đọc từ env, KHÔNG commit
+  api-key: ${GEMINI_API_KEY:} # đọc từ env, KHÔNG commit
 ```
 
 - **API key qua biến môi trường**, không hardcode, không commit (`.env` trong `.gitignore`).
 - **Timeout** 5s → LLM chậm không treo request (rơi vào fallback).
 - Không gửi dữ liệu nhạy cảm/cá nhân ra LLM (chỉ description yêu cầu; đây cũng là scope control).
-- Chọn model nhỏ (gpt-4o-mini) → rẻ, nhanh, đủ chính xác cho bài phân loại 3 nhãn.
+- Chọn model nhỏ (gemini-2.5-flash) → rẻ/miễn phí ở mức demo, nhanh, đủ chính xác cho bài phân loại 3 nhãn.
 
 ## 9. Đối chiếu rubric & câu chốt PPT
 

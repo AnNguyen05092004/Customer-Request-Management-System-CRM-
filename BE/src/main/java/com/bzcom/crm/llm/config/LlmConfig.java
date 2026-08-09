@@ -14,11 +14,11 @@ public class LlmConfig {
 
     @Bean
     @ConditionalOnProperty(name = "llm.enabled", havingValue = "true")
-    public RestClient openAiRestClient(RestClient.Builder builder, LlmProperties properties) {
+    public RestClient llmRestClient(RestClient.Builder builder, LlmProperties properties) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout((int) properties.timeoutMs());
         requestFactory.setReadTimeout((int) properties.timeoutMs());
-        return builder.baseUrl("https://api.openai.com/v1")
+        return builder.baseUrl("https://generativelanguage.googleapis.com/v1beta/openai")
                 .requestFactory(requestFactory)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.apiKey())
                 .build();

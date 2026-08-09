@@ -141,7 +141,7 @@ BE/src/main/java/com/bzcom/crm
 │   ├── entity/Alert.java
 │   └── dto/response/
 └── llm/                            (D)
-    ├── service/LlmService.java (interface) + OpenAiLlmService + MockLlmService
+    ├── service/LlmService.java (interface) + GeminiLlmService + MockLlmService
     ├── prompt/ClassifyPrompt.java
     └── dto/{request,response}/
 ```

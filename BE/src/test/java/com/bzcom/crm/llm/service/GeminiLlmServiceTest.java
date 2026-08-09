@@ -19,24 +19,25 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
-class OpenAiLlmServiceTest {
+class GeminiLlmServiceTest {
 
-    private final LlmProperties properties = new LlmProperties(true, "openai", "gpt-4o-mini", 5000, "test-key");
+    private final LlmProperties properties = new LlmProperties(true, "gemini", "gemini-2.5-flash", 5000, "test-key");
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void classifyParsesLlmJsonResponse() {
-        RestClient.Builder builder = RestClient.builder().baseUrl("https://api.openai.com/v1");
+        RestClient.Builder builder =
+                RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta/openai");
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         RestClient restClient = builder.build();
-        server.expect(requestTo("https://api.openai.com/v1/chat/completions"))
+        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withSuccess(
                         "{\"choices\":[{\"message\":{\"content\":"
                                 + "\"{\\\"category\\\":\\\"BUG\\\",\\\"confidence\\\":0.95,"
                                 + "\\\"reason\\\":\\\"error mentioned\\\"}\"}}]}",
                         MediaType.APPLICATION_JSON));
-        OpenAiLlmService service = new OpenAiLlmService(restClient, objectMapper, properties);
+        GeminiLlmService service = new GeminiLlmService(restClient, objectMapper, properties);
 
         ClassifyResult result = service.classify("500 error on login");
 
@@ -46,12 +47,35 @@ class OpenAiLlmServiceTest {
     }
 
     @Test
-    void classifyFallsBackToRuleBasedResultWhenLlmCallFails() {
-        RestClient.Builder builder = RestClient.builder().baseUrl("https://api.openai.com/v1");
+    void classifyParsesJsonWrappedInMarkdownCodeFence() {
+        RestClient.Builder builder =
+                RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta/openai");
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         RestClient restClient = builder.build();
-        server.expect(requestTo("https://api.openai.com/v1/chat/completions")).andRespond(withServerError());
-        OpenAiLlmService service = new OpenAiLlmService(restClient, objectMapper, properties);
+        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"))
+                .andRespond(withSuccess(
+                        "{\"choices\":[{\"message\":{\"content\":"
+                                + "\"```json\\n{\\\"category\\\":\\\"BUG\\\",\\\"confidence\\\":1.0,"
+                                + "\\\"reason\\\":\\\"HTTP 500 on login\\\"}\\n```\"}}]}",
+                        MediaType.APPLICATION_JSON));
+        GeminiLlmService service = new GeminiLlmService(restClient, objectMapper, properties);
+
+        ClassifyResult result = service.classify("500 error on login");
+
+        assertThat(result.category()).isEqualTo(RequestCategory.BUG);
+        assertThat(result.confidence()).isEqualTo(1.0);
+        assertThat(result.reason()).isEqualTo("HTTP 500 on login");
+    }
+
+    @Test
+    void classifyFallsBackToRuleBasedResultWhenLlmCallFails() {
+        RestClient.Builder builder =
+                RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta/openai");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        RestClient restClient = builder.build();
+        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"))
+                .andRespond(withServerError());
+        GeminiLlmService service = new GeminiLlmService(restClient, objectMapper, properties);
 
         ClassifyResult result = service.classify("Page shows 500 error");
 
@@ -61,11 +85,13 @@ class OpenAiLlmServiceTest {
 
     @Test
     void suggestPriorityFallsBackWhenLlmCallFails() {
-        RestClient.Builder builder = RestClient.builder().baseUrl("https://api.openai.com/v1");
+        RestClient.Builder builder =
+                RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta/openai");
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         RestClient restClient = builder.build();
-        server.expect(requestTo("https://api.openai.com/v1/chat/completions")).andRespond(withServerError());
-        OpenAiLlmService service = new OpenAiLlmService(restClient, objectMapper, properties);
+        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"))
+                .andRespond(withServerError());
+        GeminiLlmService service = new GeminiLlmService(restClient, objectMapper, properties);
 
         PriorityResult result = service.suggestPriority("Lỗi thanh toán");
 
@@ -74,11 +100,13 @@ class OpenAiLlmServiceTest {
 
     @Test
     void summarizeFallsBackToTruncatedDescriptionWhenLlmCallFails() {
-        RestClient.Builder builder = RestClient.builder().baseUrl("https://api.openai.com/v1");
+        RestClient.Builder builder =
+                RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta/openai");
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         RestClient restClient = builder.build();
-        server.expect(requestTo("https://api.openai.com/v1/chat/completions")).andRespond(withServerError());
-        OpenAiLlmService service = new OpenAiLlmService(restClient, objectMapper, properties);
+        server.expect(requestTo("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"))
+                .andRespond(withServerError());
+        GeminiLlmService service = new GeminiLlmService(restClient, objectMapper, properties);
 
         String summary = service.summarize(new RequestSummaryInput("short description"));
 
