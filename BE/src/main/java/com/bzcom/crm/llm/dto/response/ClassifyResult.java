@@ -1,5 +1,5 @@
 package com.bzcom.crm.llm.dto.response;
 
-import com.bzcom.crm.request.domain.Category;
+import com.bzcom.crm.request.domain.RequestCategory;
 
-public record ClassifyResult(Category category, double confidence, String reason) {}
+public record ClassifyResult(RequestCategory category, double confidence, String reason) {}

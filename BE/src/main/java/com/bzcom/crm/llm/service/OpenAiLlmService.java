@@ -7,8 +7,8 @@ import com.bzcom.crm.llm.dto.response.PriorityResult;
 import com.bzcom.crm.llm.prompt.ClassifyPrompt;
 import com.bzcom.crm.llm.prompt.PriorityPrompt;
 import com.bzcom.crm.llm.prompt.SummaryPrompt;
-import com.bzcom.crm.request.domain.Category;
-import com.bzcom.crm.request.domain.Priority;
+import com.bzcom.crm.request.domain.RequestCategory;
+import com.bzcom.crm.request.domain.RequestPriority;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -41,7 +41,7 @@ public class OpenAiLlmService implements LlmService {
             String content = complete(ClassifyPrompt.SYSTEM, ClassifyPrompt.userInput(description));
             JsonNode json = objectMapper.readTree(content);
             return new ClassifyResult(
-                    Category.valueOf(json.get("category").asText()),
+                    RequestCategory.valueOf(json.get("category").asText()),
                     json.get("confidence").asDouble(),
                     json.get("reason").asText());
         } catch (Exception exception) {
@@ -56,7 +56,7 @@ public class OpenAiLlmService implements LlmService {
             String content = complete(PriorityPrompt.SYSTEM, PriorityPrompt.userInput(description));
             JsonNode json = objectMapper.readTree(content);
             return new PriorityResult(
-                    Priority.valueOf(json.get("priority").asText()),
+                    RequestPriority.valueOf(json.get("priority").asText()),
                     json.get("confidence").asDouble(),
                     json.get("reason").asText());
         } catch (Exception exception) {
@@ -98,15 +98,15 @@ public class OpenAiLlmService implements LlmService {
                 || lower.contains("500")
                 || lower.contains("không hoạt động")
                 || lower.contains("fail")) {
-            return new ClassifyResult(Category.BUG, 0.5, "keyword rule: error terms");
+            return new ClassifyResult(RequestCategory.BUG, 0.5, "keyword rule: error terms");
         }
         if (lower.contains("thêm")
                 || lower.contains("mong")
                 || lower.contains("đề nghị")
                 || lower.contains("feature")) {
-            return new ClassifyResult(Category.FEATURE, 0.5, "keyword rule: request terms");
+            return new ClassifyResult(RequestCategory.FEATURE, 0.5, "keyword rule: request terms");
         }
-        return new ClassifyResult(Category.INQUIRY, 0.4, "fallback default");
+        return new ClassifyResult(RequestCategory.INQUIRY, 0.4, "fallback default");
     }
 
     private PriorityResult ruleBasedPriorityFallback(String description) {
@@ -117,15 +117,15 @@ public class OpenAiLlmService implements LlmService {
                 || lower.contains("payment")
                 || lower.contains("down")
                 || lower.contains("crash")) {
-            return new PriorityResult(Priority.HIGH, 0.5, "keyword rule: security/payment/outage terms");
+            return new PriorityResult(RequestPriority.HIGH, 0.5, "keyword rule: security/payment/outage terms");
         }
         if (lower.contains("hỏi")
                 || lower.contains("question")
                 || lower.contains("mỹ phẩm")
                 || lower.contains("cosmetic")) {
-            return new PriorityResult(Priority.LOW, 0.4, "keyword rule: cosmetic/question terms");
+            return new PriorityResult(RequestPriority.LOW, 0.4, "keyword rule: cosmetic/question terms");
         }
-        return new PriorityResult(Priority.MEDIUM, 0.4, "fallback default");
+        return new PriorityResult(RequestPriority.MEDIUM, 0.4, "fallback default");
     }
 
     private String truncateSummaryFallback(String description) {

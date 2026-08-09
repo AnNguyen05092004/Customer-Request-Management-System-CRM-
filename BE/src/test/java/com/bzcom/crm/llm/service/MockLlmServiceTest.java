@@ -3,8 +3,8 @@ package com.bzcom.crm.llm.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.bzcom.crm.llm.dto.request.RequestSummaryInput;
-import com.bzcom.crm.request.domain.Category;
-import com.bzcom.crm.request.domain.Priority;
+import com.bzcom.crm.request.domain.RequestCategory;
+import com.bzcom.crm.request.domain.RequestPriority;
 import org.junit.jupiter.api.Test;
 
 class MockLlmServiceTest {
@@ -13,37 +13,37 @@ class MockLlmServiceTest {
 
     @Test
     void classifiesErrorKeywordsAsBug() {
-        assertThat(service.classify("Page shows 500 error").category()).isEqualTo(Category.BUG);
-        assertThat(service.classify("Có lỗi khi đăng nhập").category()).isEqualTo(Category.BUG);
+        assertThat(service.classify("Page shows 500 error").category()).isEqualTo(RequestCategory.BUG);
+        assertThat(service.classify("Có lỗi khi đăng nhập").category()).isEqualTo(RequestCategory.BUG);
     }
 
     @Test
     void classifiesFeatureKeywordsAsFeature() {
         assertThat(service.classify("Mong thêm đăng nhập bằng Google").category())
-                .isEqualTo(Category.FEATURE);
+                .isEqualTo(RequestCategory.FEATURE);
     }
 
     @Test
     void classifiesEverythingElseAsInquiry() {
-        assertThat(service.classify("Cho tôi hỏi cách đổi mật khẩu").category()).isEqualTo(Category.INQUIRY);
+        assertThat(service.classify("Cho tôi hỏi cách đổi mật khẩu").category()).isEqualTo(RequestCategory.INQUIRY);
     }
 
     @Test
     void suggestsHighPriorityForSecurityAndPaymentKeywords() {
         assertThat(service.suggestPriority("Lỗi thanh toán không chạy").priority())
-                .isEqualTo(Priority.HIGH);
+                .isEqualTo(RequestPriority.HIGH);
     }
 
     @Test
     void suggestsLowPriorityForCosmeticQuestions() {
         assertThat(service.suggestPriority("Cho tôi hỏi về giao diện").priority())
-                .isEqualTo(Priority.LOW);
+                .isEqualTo(RequestPriority.LOW);
     }
 
     @Test
     void suggestsMediumPriorityByDefault() {
         assertThat(service.suggestPriority("Trang danh sách tải chậm").priority())
-                .isEqualTo(Priority.MEDIUM);
+                .isEqualTo(RequestPriority.MEDIUM);
     }
 
     @Test

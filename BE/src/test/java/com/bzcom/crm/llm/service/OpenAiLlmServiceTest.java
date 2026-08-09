@@ -10,8 +10,8 @@ import com.bzcom.crm.llm.config.LlmProperties;
 import com.bzcom.crm.llm.dto.request.RequestSummaryInput;
 import com.bzcom.crm.llm.dto.response.ClassifyResult;
 import com.bzcom.crm.llm.dto.response.PriorityResult;
-import com.bzcom.crm.request.domain.Category;
-import com.bzcom.crm.request.domain.Priority;
+import com.bzcom.crm.request.domain.RequestCategory;
+import com.bzcom.crm.request.domain.RequestPriority;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -40,7 +40,7 @@ class OpenAiLlmServiceTest {
 
         ClassifyResult result = service.classify("500 error on login");
 
-        assertThat(result.category()).isEqualTo(Category.BUG);
+        assertThat(result.category()).isEqualTo(RequestCategory.BUG);
         assertThat(result.confidence()).isEqualTo(0.95);
         server.verify();
     }
@@ -55,7 +55,7 @@ class OpenAiLlmServiceTest {
 
         ClassifyResult result = service.classify("Page shows 500 error");
 
-        assertThat(result.category()).isEqualTo(Category.BUG);
+        assertThat(result.category()).isEqualTo(RequestCategory.BUG);
         assertThat(result.reason()).isEqualTo("keyword rule: error terms");
     }
 
@@ -69,7 +69,7 @@ class OpenAiLlmServiceTest {
 
         PriorityResult result = service.suggestPriority("Lỗi thanh toán");
 
-        assertThat(result.priority()).isEqualTo(Priority.HIGH);
+        assertThat(result.priority()).isEqualTo(RequestPriority.HIGH);
     }
 
     @Test
