@@ -236,7 +236,7 @@
 - Refs: [BUSINESS_LOGIC.md §6](./BUSINESS_LOGIC.md#6-statistics), [openapi.yaml](./openapi.yaml)(StatsResponse)
 - Việc: `GET /api/requests/stats` (ADMIN). total, completed, completionRate (total=0→0, tránh chia 0), byCategory (group), byDeveloper (assignedCount + doneCount).
 - DoD: số liệu đúng với seed data; total=0 không lỗi; role khác → 403. + DoD chung.
-- Trạng thái: `RequestStatsService` + `GET /api/requests/stats` (thêm vào `RequestController`, `@PreAuthorize("hasRole('ADMIN')")`) đã code xong, có unit test cho logic tổng hợp (total=0 → completionRate=0; byCategory/byDeveloper). Giữ `[ ]` vì 2 phần DoD chưa verify được: (1) số liệu đúng với seed data thật — cần Testcontainers PostgreSQL, không chạy được trong môi trường Docker-lồng-Docker dùng để verify phiên này; (2) chưa có test riêng xác nhận role khác → 403 cho đúng endpoint `/stats` (cơ chế `@PreAuthorize` đã dùng chung với các endpoint khác nhưng chưa test trực tiếp case này).
+- Trạng thái: `RequestStatsService` + `GET /api/requests/stats` (thêm vào `RequestController`, `@PreAuthorize("hasRole('ADMIN')")`) đã code xong, có unit test cho logic tổng hợp (total=0 → completionRate=0; byCategory/byDeveloper). CI thật (GitHub Actions, PR #5) đã chạy full `mvn -B verify` bao gồm integration test Testcontainers PostgreSQL (`AuthMemberIT`, `FoundationIT`, `RequestWorkflowIT`) — tất cả xanh, nên môi trường/schema không phải vấn đề. Giữ `[ ]` vì còn 1 phần DoD chưa có test riêng: chưa có integration test xác nhận cụ thể role khác ADMIN → 403 cho đúng endpoint `/stats` (đã thử ở mức `@WebMvcTest` nhưng `@PreAuthorize` không enforce trong slice đó — cần IT thật, xem PR #5).
 
 > **🚩 Milestone M3:** backend hoàn chỉnh tính năng. Tag `v0.9-backend`.
 
