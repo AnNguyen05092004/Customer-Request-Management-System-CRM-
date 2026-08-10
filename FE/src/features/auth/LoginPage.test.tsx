@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,18 +32,18 @@ describe('LoginPage', () => {
     login.mockResolvedValueOnce();
     const user = userEvent.setup();
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
-    await user.type(screen.getByLabelText('Email address'), 'admin@bzcom.com');
-    await user.type(screen.getByLabelText('Password'), '1234');
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'admin@bzcom.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: '1234' } });
     await user.click(screen.getByRole('button', { name: 'Log in' }));
-    expect(login).toHaveBeenCalledWith({ email: 'admin@bzcom.com', password: '1234' });
+    await waitFor(() => expect(login).toHaveBeenCalledWith({ email: 'admin@bzcom.com', password: '1234' }));
   });
 
   it('shows a safe authentication error returned by the context', async () => {
     login.mockRejectedValueOnce(new Error('Email or password is incorrect'));
     const user = userEvent.setup();
     render(<MemoryRouter><LoginPage /></MemoryRouter>);
-    await user.type(screen.getByLabelText('Email address'), 'admin@bzcom.com');
-    await user.type(screen.getByLabelText('Password'), 'wrong');
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'admin@bzcom.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrong' } });
     await user.click(screen.getByRole('button', { name: 'Log in' }));
     expect(await screen.findByText('Email or password is incorrect')).toBeInTheDocument();
   });
