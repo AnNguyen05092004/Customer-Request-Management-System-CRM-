@@ -16,10 +16,15 @@ import com.bzcom.crm.request.domain.RequestCategory;
 import com.bzcom.crm.request.domain.RequestPriority;
 import com.bzcom.crm.request.domain.RequestStatus;
 import com.bzcom.crm.request.dto.request.RequestCreateRequest;
+import com.bzcom.crm.request.entity.Request;
+import com.bzcom.crm.request.repository.RequestRepository;
 import com.bzcom.crm.workflow.dto.request.AssignRequest;
 import com.bzcom.crm.workflow.dto.request.StatusUpdateRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,6 +63,9 @@ class RequestWorkflowIT {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private RequestRepository requestRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -292,5 +300,230 @@ class RequestWorkflowIT {
                         .content(objectMapper.writeValueAsString(statusRequest)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("memo: size must be between 0 and 255"));
+    }
+
+    @Test
+    @DisplayName("Request list applies role scope before combined filters, sorting and pagination")
+    void scopesAndFiltersRequestList() throws Exception {
+        Request client1Bug = saveRequest(
+                "Payment timeout",
+                "Gateway returns KRW timeout",
+                RequestCategory.BUG,
+                RequestPriority.HIGH,
+                client1Member.getId(),
+                dev1Member.getId());
+        Request client2Feature = saveRequest(
+                "Export dashboard",
+                "Add CSV export",
+                RequestCategory.FEATURE,
+                RequestPriority.LOW,
+                client2Member.getId(),
+                dev2Member.getId());
+        Request client1Inquiry = saveRequest(
+                "Billing question",
+                "How are invoices generated?",
+                RequestCategory.INQUIRY,
+                RequestPriority.MEDIUM,
+                client1Member.getId(),
+                null);
+
+        MvcResult adminPage = mockMvc.perform(get("/api/requests")
+                        .param("page", "0")
+                        .param("size", "2")
+                        .param("sort", "id,asc")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(3))
+                .andExpect(jsonPath("$.data.totalPages").value(2))
+                .andExpect(jsonPath("$.data.content", hasSize(2)))
+                .andReturn();
+        assertThat(responseRequestIds(adminPage)).containsExactly(client1Bug.getId(), client2Feature.getId());
+
+        MvcResult clientPage = mockMvc.perform(get("/api/requests")
+                        .param("size", "10")
+                        .param("sort", "id,asc")
+                        .header("Authorization", "Bearer " + client1Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(2))
+                .andReturn();
+        assertThat(responseRequestIds(clientPage)).containsExactly(client1Bug.getId(), client1Inquiry.getId());
+
+        MvcResult developerPage = mockMvc.perform(get("/api/requests")
+                        .param("size", "10")
+                        .param("sort", "id,asc")
+                        .header("Authorization", "Bearer " + dev1Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andReturn();
+        assertThat(responseRequestIds(developerPage)).containsExactly(client1Bug.getId());
+
+        MvcResult filtered = mockMvc.perform(get("/api/requests")
+                        .param("category", "BUG")
+                        .param("priority", "HIGH")
+                        .param("status", "PENDING")
+                        .param("keyword", "krw")
+                        .param("sort", "createdAt,desc")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andReturn();
+        assertThat(responseRequestIds(filtered)).containsExactly(client1Bug.getId());
+    }
+
+    @Test
+    @DisplayName("Request, history, alert and stats endpoints enforce ownership and role boundaries")
+    void enforcesCrossFeatureAccessBoundaries() throws Exception {
+        RequestCreateRequest request = new RequestCreateRequest(
+                "Production incident", "Service is unavailable", RequestCategory.BUG, RequestPriority.HIGH);
+
+        for (String forbiddenToken : List.of(adminToken, dev1Token)) {
+            mockMvc.perform(post("/api/requests")
+                            .header("Authorization", "Bearer " + forbiddenToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isForbidden());
+        }
+
+        long requestId = createRequest(request, client1Token);
+        mockMvc.perform(get("/api/requests/999999").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Request not found: 999999"));
+
+        mockMvc.perform(patch("/api/requests/" + requestId + "/assign")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssignRequest(false, dev1Member.getId(), 0))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/requests/" + requestId + "/history")
+                        .header("Authorization", "Bearer " + client2Token))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/requests/" + requestId + "/summary")
+                        .header("Authorization", "Bearer " + client2Token))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get("/api/requests/stats").header("Authorization", "Bearer " + client1Token))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/requests/stats").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(1))
+                .andExpect(jsonPath("$.data.completed").value(0));
+
+        MvcResult alerts = mockMvc.perform(
+                        get("/api/alerts").param("isRead", "false").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", hasSize(1)))
+                .andReturn();
+        long alertId = objectMapper
+                .readTree(alerts.getResponse().getContentAsString())
+                .path("data")
+                .path(0)
+                .path("id")
+                .asLong();
+
+        mockMvc.perform(get("/api/alerts").header("Authorization", "Bearer " + client2Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data", hasSize(0)));
+        mockMvc.perform(patch("/api/alerts/" + alertId + "/read").header("Authorization", "Bearer " + client1Token))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(patch("/api/alerts/" + alertId + "/read").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/alerts").param("isRead", "true").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].id").value(alertId));
+    }
+
+    @Test
+    @DisplayName("Auto assignment uses task count then completion recency and rejects non-admin callers")
+    void appliesAutoAssignmentAlgorithmAndPermission() throws Exception {
+        saveRequest(
+                "Existing dev one task",
+                null,
+                RequestCategory.BUG,
+                RequestPriority.LOW,
+                client1Member.getId(),
+                dev1Member.getId());
+        Request firstTarget = saveRequest(
+                "First target", null, RequestCategory.FEATURE, RequestPriority.MEDIUM, client1Member.getId(), null);
+
+        mockMvc.perform(patch("/api/requests/" + firstTarget.getId() + "/assign")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssignRequest(true, null, 0))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.assignedDeveloperId").value(dev2Member.getId()));
+
+        dev1Member.recordCompletion(Instant.parse("2026-08-10T10:00:00Z"));
+        dev2Member.recordCompletion(Instant.parse("2026-08-09T10:00:00Z"));
+        memberRepository.saveAllAndFlush(List.of(dev1Member, dev2Member));
+        Request tieTarget = saveRequest(
+                "Tie target", null, RequestCategory.INQUIRY, RequestPriority.LOW, client1Member.getId(), null);
+
+        mockMvc.perform(patch("/api/requests/" + tieTarget.getId() + "/assign")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssignRequest(true, null, 0))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.assignedDeveloperId").value(dev1Member.getId()));
+
+        mockMvc.perform(patch("/api/requests/" + tieTarget.getId() + "/assign")
+                        .header("Authorization", "Bearer " + client1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssignRequest(false, dev2Member.getId(), 1))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Auto assignment returns 422 when there is no developer")
+    void rejectsAutoAssignmentWithoutDeveloper() throws Exception {
+        Request target = saveRequest(
+                "Unassignable request", null, RequestCategory.BUG, RequestPriority.MEDIUM, client1Member.getId(), null);
+        memberRepository.deleteAll(List.of(dev1Member, dev2Member));
+        memberRepository.flush();
+
+        mockMvc.perform(patch("/api/requests/" + target.getId() + "/assign")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AssignRequest(true, null, 0))))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("No developer available for auto-assignment"));
+    }
+
+    private Request saveRequest(
+            String title,
+            String description,
+            RequestCategory category,
+            RequestPriority priority,
+            Long clientId,
+            Long developerId) {
+        Request request = new Request(title, description, category, priority, clientId);
+        if (developerId != null) {
+            request.assignDeveloper(developerId);
+        }
+        return requestRepository.saveAndFlush(request);
+    }
+
+    private long createRequest(RequestCreateRequest request, String token) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/requests")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return objectMapper
+                .readTree(result.getResponse().getContentAsString())
+                .path("data")
+                .path("id")
+                .asLong();
+    }
+
+    private List<Long> responseRequestIds(MvcResult result) throws Exception {
+        JsonNode content = objectMapper
+                .readTree(result.getResponse().getContentAsString())
+                .path("data")
+                .path("content");
+        List<Long> ids = new ArrayList<>();
+        content.forEach(item -> ids.add(item.path("id").asLong()));
+        return ids;
     }
 }

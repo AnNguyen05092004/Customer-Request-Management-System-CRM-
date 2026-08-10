@@ -65,6 +65,32 @@ class FoundationIT {
     }
 
     @Test
+    void flywayEnforcesRequiredNonBlankAlertMessages() {
+        String nullable = jdbcTemplate.queryForObject(
+                """
+                SELECT is_nullable
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'alerts'
+                  AND column_name = 'message'
+                """,
+                String.class);
+        Integer constraintCount = jdbcTemplate.queryForObject(
+                """
+                SELECT count(*)
+                FROM information_schema.table_constraints
+                WHERE table_schema = 'public'
+                  AND table_name = 'alerts'
+                  AND constraint_name = 'chk_alerts_message_not_blank'
+                  AND constraint_type = 'CHECK'
+                """,
+                Integer.class);
+
+        assertThat(nullable).isEqualTo("NO");
+        assertThat(constraintCount).isEqualTo(1);
+    }
+
+    @Test
     void healthEndpointIsPublic() throws Exception {
         mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
     }

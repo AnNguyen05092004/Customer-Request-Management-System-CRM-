@@ -264,7 +264,8 @@ owner để thay đổi business state.
 ### 5.3 File dùng chung và migration
 
 - Không sửa migration đã merge, đặc biệt `V1__init.sql`.
-- `V2` đang dành cho seed demo; migration schema tiếp theo bắt đầu từ `V3__...sql`.
+- `V2` dành cho seed demo; `V3` đã harden `alerts.message`; migration schema tiếp theo bắt
+  đầu từ `V4__...sql`.
 - Trước khi tạo migration mới, báo nhóm để giữ version duy nhất, tránh hai file cùng version.
 - Không tự thêm dependency vào `pom.xml`; nêu lý do và ảnh hưởng trong PR.
 - Không sửa `SecurityConfig`, `ErrorCode`, response envelope hoặc OpenAPI chỉ để endpoint

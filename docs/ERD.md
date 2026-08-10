@@ -13,7 +13,7 @@
 4. [Quyết định thiết kế cần nhấn mạnh](#4-quyết-định-thiết-kế-cần-nhấn-mạnh)
 5. [Index & ràng buộc](#5-index--ràng-buộc)
 6. [File DBML (dán vào dbdiagram.io)](#6-file-dbml-dán-vào-dbdiagramio)
-7. [Flyway migration (V1__init.sql)](#7-flyway-migration-v1__initsql)
+7. [Flyway schema (V1 + V3)](#7-flyway-schema-v1__initsql--v3__harden_alert_messagesql)
 8. [Demo seed (V2__seed_demo.sql)](#8-demo-seed-v2__seed_demosql)
 
 ---
@@ -128,7 +128,7 @@ erDiagram
 | request_id | bigint | FK → requests.id, NOT NULL | request liên quan |
 | target_member_id | bigint | FK → members.id, NOT NULL | người nhận |
 | alert_type | varchar(30) | NOT NULL | `ASSIGNED` / `STATUS_CHANGED` / `HIGH_PRIORITY_REGISTERED` |
-| message | varchar(255) | | nội dung hiển thị |
+| message | varchar(255) | NOT NULL | nội dung hiển thị, không được rỗng |
 | is_read | boolean | NOT NULL, default false | |
 | created_at | timestamptz | NOT NULL | UTC instant |
 
@@ -229,7 +229,7 @@ Table alerts {
   request_id bigint [not null, ref: > requests.id]
   target_member_id bigint [not null, ref: > members.id]
   alert_type varchar [not null, note: 'ASSIGNED / STATUS_CHANGED / HIGH_PRIORITY_REGISTERED']
-  message varchar
+  message varchar [not null]
   is_read boolean [not null, default: false]
   created_at timestamptz [not null]
 }
@@ -244,9 +244,11 @@ Table refresh_tokens {
 }
 ```
 
-## 7. Flyway migration (V1__init.sql)
+## 7. Flyway schema (V1__init.sql + V3__harden_alert_message.sql)
 
-> File thực thi: `BE/src/main/resources/db/migration/V1__init.sql`. Flyway chạy tự động lúc app start.
+> `V1__init.sql` tạo schema nền và không sửa lại sau khi merge.
+> `V3__harden_alert_message.sql` backfill alert cũ rồi bắt buộc `message` không null/không
+> rỗng. Khối SQL dưới đây mô tả **schema cuối sau mọi migration**; Flyway chạy tự động lúc app start.
 
 ```sql
 CREATE TABLE members (
@@ -297,10 +299,11 @@ CREATE TABLE alerts (
     request_id        BIGINT      NOT NULL REFERENCES requests(id) ON DELETE RESTRICT,
     target_member_id  BIGINT      NOT NULL REFERENCES members(id) ON DELETE RESTRICT,
     alert_type        VARCHAR(30) NOT NULL,
-    message           VARCHAR(255),
+    message           VARCHAR(255) NOT NULL,
     is_read           BOOLEAN     NOT NULL DEFAULT false,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT chk_alerts_type CHECK (alert_type IN ('ASSIGNED', 'STATUS_CHANGED', 'HIGH_PRIORITY_REGISTERED'))
+    CONSTRAINT chk_alerts_type CHECK (alert_type IN ('ASSIGNED', 'STATUS_CHANGED', 'HIGH_PRIORITY_REGISTERED')),
+    CONSTRAINT chk_alerts_message_not_blank CHECK (btrim(message) <> '')
 );
 
 CREATE TABLE refresh_tokens (

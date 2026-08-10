@@ -22,6 +22,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @EntityListeners(AuditingEntityListener.class)
 public class Alert {
 
+    private static final int MAX_MESSAGE_LENGTH = 255;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -47,6 +49,12 @@ public class Alert {
     private Instant createdAt;
 
     public Alert(Long requestId, Long targetMemberId, AlertType alertType, String message) {
+        if (message == null || message.isBlank()) {
+            throw new IllegalArgumentException("Alert message must not be blank");
+        }
+        if (message.length() > MAX_MESSAGE_LENGTH) {
+            throw new IllegalArgumentException("Alert message must not exceed 255 characters");
+        }
         this.requestId = requestId;
         this.targetMemberId = targetMemberId;
         this.alertType = alertType;
