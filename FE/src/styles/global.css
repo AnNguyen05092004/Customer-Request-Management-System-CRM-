@@ -400,6 +400,34 @@ input:focus-visible {
   border-color: #c4d2ff;
 }
 
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.ai-guidance-card {
+  background: linear-gradient(145deg, #f4f7ff, #edf2ff);
+  border-color: #c4d2ff;
+}
+
+.ai-suggestion {
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid #d8e2ff;
+  border-radius: 6px;
+}
+
+.ai-suggestion .ant-progress {
+  margin: 8px 0 4px;
+}
+
+.ai-suggestion .ant-typography {
+  margin-bottom: 0;
+}
+
 .auth-page {
   display: grid;
   place-items: center;
@@ -530,6 +558,10 @@ input:focus-visible {
   .request-filters > *,
   .toolbar > * {
     width: 100% !important;
+  }
+
+  .form-actions > * {
+    width: 100%;
   }
 
   .demo-banner {

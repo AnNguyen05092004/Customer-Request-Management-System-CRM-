@@ -106,6 +106,7 @@ Page không gọi Axios trực tiếp: `Page → query hook → API function →
 - Request read flow hiện đã chạy ở `api` mode theo mặc định và đã nối list/filter/page/detail/history.
 - Request detail đã nối assign/status/history/AI summary; mọi workflow mutation gửi
   `expectedVersion` từ response mới nhất và invalidate cache liên quan.
+- Request create đã nối AI category/priority suggestion và được giới hạn cho CLIENT.
 - Member D thêm Alert/LLM features và query invalidation liên quan.
 - Mọi API/type change phải bám `docs/openapi.yaml` và có test trong cùng PR.
 

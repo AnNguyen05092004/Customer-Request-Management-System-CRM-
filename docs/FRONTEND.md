@@ -329,6 +329,9 @@ bám contract đã được xác nhận.
       <Route index element={<Navigate to="/requests" />} />
       <Route path="/requests" element={<RequestListPage />} />
       <Route path="/requests/:id" element={<RequestDetailPage />} />
+      <Route element={<RoleRoute allow={['CLIENT']} />}>
+        <Route path="/requests/new" element={<RequestCreatePage />} />
+      </Route>
       <Route element={<RoleRoute allow={['ADMIN']} />}>
         <Route path="/members" element={<MemberListPage />} />
         <Route path="/members/:id" element={<MemberDetailPage />} />
@@ -370,6 +373,9 @@ Form email + password → `login()`. Thành công → điều hướng `/request
 ### RequestCreatePage (CLIENT)
 - Form: title, description, category, priority (validation khớp backend: title bắt buộc...).
 - Nút **"AI gợi ý"**: gọi `POST /classify` + `/suggest-priority` với description → tự điền category/priority (kèm hiển thị confidence + reason) → **người dùng xác nhận** trước khi submit (đúng nguyên tắc "LLM chỉ gợi ý", [BR-13](./ANALYZE.md#7-business-rules-br)). Mọi lệnh assign/status gửi `expectedVersion` từ `RequestResponse.version`; 409 thì refetch detail và yêu cầu người dùng xác nhận lại.
+- Route `/requests/new` chỉ cho CLIENT; demo adapter là read-only nên form hiện cảnh báo và
+  khóa mutation khi `VITE_REQUEST_DATA_MODE=demo` để không tạo dữ liệu backend bị ẩn khỏi
+  danh sách demo.
 
 ### StatsDashboardPage (ADMIN)
 - Card số: total, completed, completionRate (%).

@@ -344,11 +344,15 @@
   summary đã nối. Contract test kiểm đúng path/body và full-stack smoke qua Nginx proxy đã
   chạy create → auto-assign → IN_PROGRESS → history thành công.
 
-### [ ] T-5.5 — RequestCreatePage + nút AI gợi ý
+### [x] T-5.5 — RequestCreatePage + nút AI gợi ý
 - Owner: FE   Depends on: T-5.2, T-2.B2, T-3.2   Ước lượng: 30′
 - Refs: [FRONTEND.md §10](./FRONTEND.md#10-đặc-tả-từng-trang), [LLM.md](./LLM.md)
 - Việc: Form tạo (validation khớp backend). Nút "AI gợi ý" → classify + suggest-priority → điền sẵn + show confidence/reason → **người dùng xác nhận** rồi submit.
 - DoD: CLIENT tạo được → về danh sách; AI gợi ý điền category/priority nhưng người dùng vẫn sửa được trước submit.
+- Bằng chứng FE: route `/requests/new` được `RoleRoute` giới hạn CLIENT; form khóa độ dài
+  theo OpenAPI; classify + suggest-priority chạy song song từ cùng description, hiển thị
+  confidence/reason và chỉ điền gợi ý để người dùng sửa/xác nhận. Contract test kiểm body;
+  full-stack smoke qua Nginx proxy đã chạy AI gợi ý → tạo → request xuất hiện trong list.
 
 ### [ ] T-5.6 — AlertBell + AlertListPage
 - Owner: FE   Depends on: T-5.2, T-2.D2   Ước lượng: 30′

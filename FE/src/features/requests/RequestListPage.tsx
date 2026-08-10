@@ -14,7 +14,7 @@ import {
 } from 'antd';
 import { Plus, RotateCcw, Search as SearchIcon } from 'lucide-react';
 import { useMemo } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/useAuth';
 import { PageHeader } from '../../components/PageHeader';
 import { EmptyState, ErrorAlert, PageLoading } from '../../components/PageStates';
@@ -47,6 +47,7 @@ function sortParam(value: string | null): string {
 
 export function RequestListPage() {
   const { role } = useAuth();
+  const navigate = useNavigate();
   const screens = Grid.useBreakpoint();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -139,8 +140,8 @@ export function RequestListPage() {
         description="Manage and track incoming client requests across their full lifecycle."
         actions={
           role === 'CLIENT' ? (
-            <Tooltip title="Create Request will be enabled when Request mutation API is integrated.">
-              <Button type="primary" icon={<Plus size={16} />} disabled>Create request</Button>
+            <Tooltip title="Register a new customer request">
+              <Button type="primary" icon={<Plus size={16} />} onClick={() => void navigate('/requests/new')}>Create request</Button>
             </Tooltip>
           ) : undefined
         }

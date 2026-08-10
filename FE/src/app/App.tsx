@@ -11,6 +11,7 @@ const MemberListPage = lazy(() => import('../features/members/MemberListPage').t
 const MemberDetailPage = lazy(() => import('../features/members/MemberDetailPage').then((module) => ({ default: module.MemberDetailPage })));
 const RequestListPage = lazy(() => import('../features/requests/RequestListPage').then((module) => ({ default: module.RequestListPage })));
 const RequestDetailPage = lazy(() => import('../features/requests/RequestDetailPage').then((module) => ({ default: module.RequestDetailPage })));
+const RequestCreatePage = lazy(() => import('../features/requests/RequestCreatePage').then((module) => ({ default: module.RequestCreatePage })));
 
 export function App() {
   return (
@@ -23,6 +24,9 @@ export function App() {
             <Route index element={<Navigate to="/requests" replace />} />
             <Route path="/requests" element={<RequestListPage />} />
             <Route path="/requests/:id" element={<RequestDetailPage />} />
+            <Route element={<RoleRoute allow={['CLIENT']} />}>
+              <Route path="/requests/new" element={<RequestCreatePage />} />
+            </Route>
             <Route element={<RoleRoute allow={['ADMIN']} />}>
               <Route path="/members" element={<MemberListPage />} />
               <Route path="/members/:id" element={<MemberDetailPage />} />

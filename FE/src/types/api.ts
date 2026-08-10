@@ -92,3 +92,19 @@ export interface HistoryResponse {
 export interface SummaryResponse {
   summary: string;
 }
+
+export interface DescriptionRequest {
+  description: string;
+}
+
+export interface ClassifyResult {
+  category: Category;
+  confidence: number;
+  reason: string;
+}
+
+export interface PriorityResult {
+  priority: Priority;
+  confidence: number;
+  reason: string;
+}
