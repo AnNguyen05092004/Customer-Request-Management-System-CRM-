@@ -145,7 +145,7 @@
 { "email": "admin@bzcom.com", "password": "1234" }
 // Response 200
 { "status": 200, "message": "success",
-  "data": { "accessToken": "eyJ...", "refreshToken": "eyJ...",
+  "data": { "accessToken": "eyJ...", "refreshToken": "<opaque-refresh-token>",
             "tokenType": "Bearer", "role": "ADMIN" } }
 ```
 
@@ -168,7 +168,7 @@
 { "email": "client2@bzcom.com", "password": "1234", "name": "Client Two" }
 // Response 201  (KHÔNG bao giờ trả password)
 { "status": 201, "message": "created",
-  "data": { "id": 5, "email": "dev1@bzcom.com", "name": "Dev One", "role": "DEVELOPER" } }
+  "data": { "id": 5, "email": "client2@bzcom.com", "name": "Client Two", "role": "CLIENT" } }
 ```
 
 ### POST /api/requests  (HIGH → tự sinh alert cho ADMIN)
