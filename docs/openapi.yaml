@@ -385,11 +385,7 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [description]
-              properties:
-                description: { type: string, example: 'When I click login, page shows 500 error' }
+            schema: { $ref: '#/components/schemas/DescriptionRequest' }
       responses:
         '200':
           description: Kết quả phân loại
@@ -412,11 +408,7 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [description]
-              properties:
-                description: { type: string }
+            schema: { $ref: '#/components/schemas/DescriptionRequest' }
       responses:
         '200':
           description: Priority gợi ý
@@ -537,7 +529,7 @@ components:
       required: [email, password]
       properties:
         email:    { type: string, format: email, example: admin@bzcom.com }
-        password: { type: string, example: '1234' }
+        password: { type: string, maxLength: 72, example: '1234' }
 
     RefreshTokenRequest:
       type: object
@@ -585,12 +577,19 @@ components:
         category:    { $ref: '#/components/schemas/Category' }
         priority:    { $ref: '#/components/schemas/Priority' }
 
+    DescriptionRequest:
+      type: object
+      additionalProperties: false
+      required: [description]
+      properties:
+        description: { type: string, minLength: 1, example: 'When I click login, page shows 500 error' }
+
     RequestResponse:
       type: object
       properties:
         id:          { type: integer, format: int64 }
         title:       { type: string }
-        description: { type: string }
+        description: { type: string, nullable: true }
         category:    { $ref: '#/components/schemas/Category' }
         priority:    { $ref: '#/components/schemas/Priority' }
         status:      { $ref: '#/components/schemas/RequestStatus' }
@@ -647,7 +646,7 @@ components:
         toStatus:
           allOf: [{ $ref: '#/components/schemas/RequestStatus' }]
           nullable: true
-        memo:       { type: string }
+        memo:       { type: string, nullable: true }
         changedAt:  { type: string, format: date-time }
 
     AlertResponse:
@@ -663,12 +662,12 @@ components:
     StatsResponse:
       type: object
       properties:
-        total:          { type: integer, example: 42 }
-        completed:      { type: integer, example: 18 }
-        completionRate: { type: number, format: float, example: 0.43 }
+        total:          { type: integer, format: int64, example: 42 }
+        completed:      { type: integer, format: int64, example: 18 }
+        completionRate: { type: number, format: double, example: 0.43 }
         byCategory:
           type: object
-          additionalProperties: { type: integer }
+          additionalProperties: { type: integer, format: int64 }
           example: { BUG: 20, FEATURE: 15, INQUIRY: 7 }
         byDeveloper:
           type: array
