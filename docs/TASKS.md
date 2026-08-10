@@ -3,6 +3,11 @@
 > Danh sách công việc **đầy đủ, có thứ tự, kiểm chứng được** để hoàn thiện dự án. Mỗi task tự chứa đủ thông tin để một **thành viên** hoặc **AI agent** nhận và làm độc lập.
 >
 > **Cách dùng:** làm theo thứ tự Phase. Trong một phase, các task cùng owner làm tuần tự; khác owner có thể làm song song **nếu đã thoả `Depends on`**. Tick `[x]` khi **đạt toàn bộ Definition of Done (DoD)**, không phải khi "viết xong code".
+>
+> **Snapshot `develop` 2026-08-10:** backend feature đã merge; 44 unit test + 19 integration
+> test và full-stack Docker smoke đang xanh. Task còn `[ ]` có thể đã có implementation nhưng
+> vẫn thiếu một phần DoD được ghi rõ (test nghiệm thu, bằng chứng thủ công hoặc FE action),
+> không đồng nghĩa phải viết lại từ đầu.
 
 ---
 
@@ -72,19 +77,19 @@
 
 > A làm trước và merge sớm. B/C/D dựa trên nền này. Xong sớm → A nhảy vào phụ C.
 
-### [ ] T-1.1 — Khởi tạo project Spring Boot
+### [x] T-1.1 — Khởi tạo project Spring Boot
 - Owner: A   Depends on: T-0.4   Ước lượng: 15′
 - Refs: [ARCHITECTURE.md](./ARCHITECTURE.md), [kế hoạch §3.2](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md)
 - Việc: tạo project Maven trong `BE/`: Java 21 (LTS), Spring Boot 3.5.5 (khóa bằng Maven Wrapper và `pom.xml`). Thêm dependency: web, data-jpa, security, `spring-security-test`, validation, actuator, postgresql, flyway-core + PostgreSQL module, jjwt (api/impl/jackson), springdoc-openapi-starter-webmvc-ui, mapstruct + processor, lombok, `spring-boot-testcontainers`, Testcontainers 2.0.5 `testcontainers-junit-jupiter` + `testcontainers-postgresql` (test; tương thích Docker Engine 29+). Tạo `CentralMapperConfig` (`componentModel=spring`, constructor injection, unmapped target = error), compiler annotation processors (Lombok + MapStruct), Spotless (format/import order), Failsafe cho `*IT` và JaCoCo report. Tạo `CrmApplication.java`, package gốc `com.bzcom.crm`.
 - DoD: `cd BE && ./mvnw compile` pass; app start được (dù chưa có business endpoint); push branch `feature/foundation`.
 
-### [ ] T-1.2 — Cấu hình DB + Flyway + profiles
+### [x] T-1.2 — Cấu hình DB + Flyway + profiles
 - Owner: A   Depends on: T-1.1   Ước lượng: 15′
 - Refs: [ERD.md §7](./ERD.md#7-flyway-migration-v1__initsql), [ARCHITECTURE.md §9](./ARCHITECTURE.md#9-cấu-hình-profile--môi-trường)
 - Việc: tạo `application.yml` với profile `dev`/`docker` đều trỏ PostgreSQL qua env; test integration dùng `@ServiceConnection` từ Testcontainers PostgreSQL. Tạo `db/migration/V1__init.sql` (5 bảng) dùng mọi môi trường; seed demo đặt riêng trong `db/demo` và chỉ bật ở `dev`/`docker`. Bật Flyway, đặt `ddl-auto=validate`.
 - DoD: chạy profile `dev` → Flyway tạo 5 bảng + index; test integration khởi PostgreSQL container và log Flyway "Successfully applied 1 migration".
 
-### [ ] T-1.3 — Common: ApiResponse + PageResponse
+### [x] T-1.3 — Common: ApiResponse + PageResponse
 - Owner: A   Depends on: T-1.1   Ước lượng: 10′
 - Refs: [kế hoạch §16.1](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md), [OPENAPI.md §4](./OPENAPI.md#4-response-envelope--phân-trang)
 - Việc: `common/response/ApiResponse.java` (record, `ok`/`created`/`error`), `PageResponse.java` (content/page/size/totalElements/totalPages).
@@ -95,20 +100,22 @@
 - Refs: [kế hoạch §16.2](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md), [BUSINESS_LOGIC.md §9](./BUSINESS_LOGIC.md#9-bảng-edge-case-tổng-hợp)
 - Việc: `BusinessException` immutable (chứa `ErrorCode`) + `ErrorCode` enum (mã ổn định, message an toàn, HTTP status). `GlobalExceptionHandler` (`@RestControllerAdvice`) xử lý: validation→400, JSON field lạ/malformed→400, AccessDenied→403, EntityNotFound→404, InvalidStatusTransition/RequestNotAssigned/OptimisticLock→409, fallback→500. Tất cả trả `ApiResponse.error`; fallback chỉ log stacktrace ở server, không trả chi tiết nội bộ.
 - DoD: test: ném mỗi exception → nhận đúng status + envelope; không lộ stacktrace.
+- Trạng thái: implementation và các lỗi chính đã được E2E cover; còn thiếu test ma trận đầy
+  đủ 404/422/500 trước khi tick theo đúng DoD "mỗi exception".
 
-### [ ] T-1.5 — Common: BaseTimeEntity + JPA Auditing
+### [x] T-1.5 — Common: BaseTimeEntity + JPA Auditing
 - Owner: A   Depends on: T-1.1   Ước lượng: 10′
 - Refs: [kế hoạch §16.4](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md)
 - Việc: `BaseTimeEntity` (`@MappedSuperclass`, `@CreatedDate`/`@LastModifiedDate`). `JpaAuditingConfig` với `@EnableJpaAuditing`.
 - DoD: một entity kế thừa → createdAt/updatedAt tự set khi save (test).
 
-### [ ] T-1.6 — Security + JWT
+### [x] T-1.6 — Security + JWT
 - Owner: A   Depends on: T-1.4   Ước lượng: 30′
 - Refs: [BUSINESS_LOGIC.md §1](./BUSINESS_LOGIC.md#1-authentication--authorization), [kế hoạch §16.6](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md)
 - Việc: `SecurityConfig` stateless, CSRF off, chỉ permitAll **theo method** cho `POST /api/auth/login|refresh|logout`, `POST /api/members`, Swagger; mọi route khác authenticated + `@EnableMethodSecurity`. `JwtProvider` chỉ generate/validate access JWT (memberId+role, 15 phút); refresh token opaque sinh từ `SecureRandom`, DB chỉ lưu SHA-256 hash. `JwtAuthenticationFilter` đọc Bearer. `PasswordEncoder` = BCrypt. `CorsConfig` cho `http://localhost:5173`.
 - DoD: endpoint bảo vệ không token → 401; token hợp lệ → qua; Swagger UI truy cập được không cần token.
 
-### [ ] T-1.7 — OpenApiConfig (Swagger)
+### [x] T-1.7 — OpenApiConfig (Swagger)
 - Owner: A (khởi tạo) / D (hoàn thiện)   Depends on: T-1.1   Ước lượng: 10′
 - Refs: [OPENAPI.md](./OPENAPI.md)
 - Việc: `OpenApiConfig` (metadata: title, version) + security scheme `bearerAuth` (nút Authorize trên Swagger UI để dán JWT).
@@ -131,6 +138,8 @@
 - Refs: [ERD.md §8](./ERD.md#8-demo-seed-v2__seed_demosql), [README §5](./README.md)
 - Việc: `db/demo/V2__seed_demo.sql` chỉ được thêm vào Flyway locations của profile `dev`/`docker`: admin/dev1/dev2/client1 (password BCrypt của `1234`) + vài request mẫu. Dùng hash BCrypt thật; production profile chỉ chạy `db/migration`.
 - DoD: sau khi start (profile demo), login được cả 4 tài khoản; có sẵn request để test filter/stats.
+- Trạng thái: migration seed và BCrypt hash thật đã chạy trong Docker; còn thiếu biên bản
+  smoke login đủ cả 4 tài khoản trước khi tick.
 
 > **🚩 Milestone M1:** merge Phase 1 vào `develop`. B/C/D bắt đầu Phase 2. A thông báo "nền tảng sẵn sàng".
 
@@ -139,10 +148,13 @@
 ## PHASE 2 — Tính năng backend song song (B, C, D + A phụ, ~150′)
 
 > B/C/D `git pull develop` (có nền của A) rồi làm trên feature branch riêng. Package tách biệt → ít đụng độ.
+>
+> Implementation Phase 2 đã merge. Các task còn mở dưới đây đang thiếu test DoD cụ thể;
+> chúng là phạm vi hardening, không phải blocker biên dịch/runtime.
 
 ### Nhánh B — Request core
 
-### [ ] T-2.B1 — Request entity + repository
+### [x] T-2.B1 — Request entity + repository
 - Owner: B   Depends on: M1   Ước lượng: 15′
 - Refs: [ERD.md](./ERD.md)(requests), [kế hoạch §16.5](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md)
 - Việc: `Request` entity kế thừa BaseTimeEntity (enum category/priority/status, `@Version int version`, clientId, assignedDeveloperId nullable). `RequestRepository extends JpaRepository, JpaSpecificationExecutor`.
@@ -153,22 +165,26 @@
 - Refs: [openapi.yaml](./openapi.yaml), [BUSINESS_LOGIC.md §5.3](./BUSINESS_LOGIC.md#53-pseudocode-tạo-request-high)
 - Việc: `POST /api/requests` (CLIENT only, `@PreAuthorize`), status mặc định PENDING, clientId = current user. `@Transactional`: nếu priority=HIGH → gọi `AlertService.create(...)` cho mọi ADMIN.
 - DoD: CLIENT tạo → 201; role khác → 403; tạo HIGH → mọi ADMIN có alert (cùng transaction). + DoD chung.
+- Trạng thái: create 201 và HIGH alert đã có E2E; còn thiếu IT role khác → 403.
 
 ### [ ] T-2.B3 — Danh sách request: filter + sort + paging + phạm vi role
 - Owner: B   Depends on: T-2.B1   Ước lượng: 35′
 - Refs: [BUSINESS_LOGIC.md §1.3](./BUSINESS_LOGIC.md#13-ma-trận-truy-cập-dữ-liệu-request-áp-trước-mọi-filter-khác), [OPENAPI.md §7](./OPENAPI.md)
 - Việc: `GET /api/requests` với `Pageable` + JPA `Specification` (status/category/priority/keyword). **Áp phạm vi role trước:** ADMIN=all, CLIENT=client_id, DEVELOPER=assigned_developer_id. Trả `PageResponse`.
 - DoD: 3 role gọi → thấy đúng phạm vi; filter tổ hợp + `?page&size&sort` hoạt động; keyword tìm trong title/description. + DoD chung.
+- Trạng thái: code/filter/paging đã merge; còn thiếu integration test dữ liệu cho đủ 3 role
+  và filter tổ hợp trước khi tick hoàn tất.
 
 ### [ ] T-2.B4 — Chi tiết request (kiểm quyền xem)
 - Owner: B   Depends on: T-2.B1   Ước lượng: 15′
 - Refs: [BUSINESS_LOGIC.md §1.3](./BUSINESS_LOGIC.md#13-ma-trận-truy-cập-dữ-liệu-request-áp-trước-mọi-filter-khác)
 - Việc: `GET /api/requests/{id}`. Kiểm ownership: ngoài phạm vi role → 403; không tồn tại → 404.
 - DoD: chủ/ADMIN xem được; người khác → 403; id sai → 404. + DoD chung.
+- Trạng thái: endpoint và ownership 403 đã có IT; còn thiếu case 404 riêng trước khi tick.
 
 ### Nhánh C — Workflow logic (nặng nhất — A phụ khi rảnh)
 
-### [ ] T-2.C1 — State machine RequestStatus
+### [x] T-2.C1 — State machine RequestStatus
 - Owner: C   Depends on: M1   Ước lượng: 15′
 - Refs: [BUSINESS_LOGIC.md §3](./BUSINESS_LOGIC.md#3-status-state-machine), [kế hoạch §16.3](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md)
 - Việc: enum `RequestStatus` với `ALLOWED` map + `canTransitionTo()`. `InvalidStatusTransitionException`.
@@ -179,14 +195,17 @@
 - Refs: [BUSINESS_LOGIC.md §4](./BUSINESS_LOGIC.md#4-automatic-history-recording), [ERD.md](./ERD.md)(request_histories)
 - Việc: `RequestHistory` entity + repo. `HistoryService.record(request, changedBy, from, to, memo)`. `GET /api/requests/{id}/history` sắp xếp `changedAt ASC`, bắt buộc gọi chung `RequestAccessPolicy.assertCanRead` như detail.
 - DoD: gọi record → tạo bản ghi; chủ/ADMIN lấy history đúng thứ tự, DEV/CLIENT không thuộc request → 403. + DoD chung.
+- Trạng thái: record/thứ tự history đã chạy trong E2E; còn thiếu IT history ngoài phạm vi → 403.
 
 ### [ ] T-2.C3 — Auto-assign + manual assign
 - Owner: C   Depends on: T-2.C2, T-2.B1, T-2.D1   Ước lượng: 40′
 - Refs: [BUSINESS_LOGIC.md §2](./BUSINESS_LOGIC.md#2-auto-assignment)
 - Việc: `AssignService` + `PATCH /api/requests/{id}/assign` (ADMIN only). Command bắt buộc `expectedVersion`; auto=true khóa developer theo `id ASC` (`PESSIMISTIC_WRITE`) rồi tính taskCount động (COUNT chưa DONE), min → tie-break `last_completed_at` desc (null cuối); 0 developer → 422. auto=false → dùng developerId (phải là DEVELOPER). `@Transactional`: version check + gán + flush (`@Version`) + history + alert.
 - DoD: **unit test thuật toán** (case count khác nhau + case hoà tie-break như [ví dụ §2.3](./BUSINESS_LOGIC.md#23-ví-dụ-minh-hoạ-để-demoslide)); auto-assign chọn đúng dev; ghi history + alert; 0 dev → 422; role khác → 403. + DoD chung.
+- Trạng thái: auto/manual assign, history và alert đã merge; còn thiếu test ma trận thuật toán,
+  zero-developer 422 và permission trước khi tick.
 
-### [ ] T-2.C4 — Đổi status (state machine + optimistic lock + history + alert)
+### [x] T-2.C4 — Đổi status (state machine + optimistic lock + history + alert)
 - Owner: C   Depends on: T-2.C1, T-2.C2, T-2.D1   Ước lượng: 35′
 - Refs: [BUSINESS_LOGIC.md §3,§8](./BUSINESS_LOGIC.md#3-status-state-machine)
 - Việc: `StatusService` + `PATCH /api/requests/{id}/status` (ADMIN hoặc DEVELOPER được gán — ownership check → 403). Command bắt buộc `expectedVersion`; check version trước; request chưa có assignee → 409; `canTransitionTo` → sai 409. `@Transactional`: update + flush (`@Version`, conflict→409) + history + alert STATUS_CHANGED cho client. Khi →DONE: set `member.last_completed_at = now()`.
@@ -194,19 +213,19 @@
 
 ### Nhánh D — Alert + Swagger
 
-### [ ] T-2.D1 — Alert entity + AlertService (điểm vào tạo alert)
+### [x] T-2.D1 — Alert entity + AlertService (điểm vào tạo alert)
 - Owner: D   Depends on: M1   Ước lượng: 25′
 - Refs: [BUSINESS_LOGIC.md §5](./BUSINESS_LOGIC.md#5-automatic-alert-generation), [ERD.md](./ERD.md)(alerts)
 - Việc: `Alert` entity + repo. `AlertService.create(targetMemberId, requestId, type, message)` — interface để B/C gọi. (Đây là dependency của T-2.B2, T-2.C3, T-2.C4 → **làm sớm**.)
 - DoD: `AlertService.create` lưu alert đúng; test tạo alert từng loại type. + DoD chung.
 
-### [ ] T-2.D2 — Alert API (list own + mark read)
+### [x] T-2.D2 — Alert API (list own + mark read)
 - Owner: D   Depends on: T-2.D1   Ước lượng: 20′
 - Refs: [openapi.yaml](./openapi.yaml)(Alert)
 - Việc: `GET /api/alerts` (của current user, filter `?isRead`), `PATCH /api/alerts/{id}/read` (chỉ owner → 403 nếu không). 
 - DoD: user chỉ thấy alert của mình; mark read đổi isRead=true; sửa alert người khác → 403. + DoD chung.
 
-### [ ] T-2.D3 — Rà soát Swagger endpoint Phase 2
+### [x] T-2.D3 — Rà soát Swagger endpoint Phase 2
 - Owner: D   Depends on: (các endpoint P2)   Ước lượng: 20′
 - Refs: [OPENAPI.md](./OPENAPI.md), [openapi.yaml](./openapi.yaml)
 - Việc: đảm bảo controller Phase 2 có `@Tag`/`@Operation`/`@ApiResponse`; đối chiếu path/method/status với `openapi.yaml` trước khi merge.
@@ -265,18 +284,24 @@
   required status check vào branch protection.
 - DoD: mở PR → `Backend verify`, `Frontend verify` và `Full-stack Docker smoke` đều chạy; PR fail một
   quality gate không merge được; badge CI xanh trên README.
+- Trạng thái: cả ba check đã xanh trên PR #13; còn thao tác GitHub thủ công là thêm
+  `Full-stack Docker smoke` vào required checks của `main` và `develop` (và xác nhận badge nếu dùng).
 
 ### [ ] T-4.4 — Endpoint/lệnh reset demo
 - Owner: A   Depends on: T-1.10   Ước lượng: 10′
 - Refs: [ERD.md §8](./ERD.md#8-demo-seed-v2__seed_demosql), [kế hoạch §13](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md#13-quản-lý-rủi-ro-demo)
 - Việc: cách reset dữ liệu về seed sạch (documented: `docker compose down -v && up`, hoặc endpoint `POST /api/admin/reset-demo` chỉ profile demo).
 - DoD: chạy reset → dữ liệu về đúng seed ban đầu; demo lặp lại nhất quán.
+- Trạng thái: lệnh reset đã document trong ERD/README; chưa ghi nhận hai lần reset/replay
+  liên tiếp nên chưa tick.
 
-### [ ] T-4.5 — Contract test OpenAPI cuối cùng
+### [x] T-4.5 — Contract test OpenAPI cuối cùng
 - Owner: D   Depends on: M3   Ước lượng: 20′
 - Refs: [OPENAPI.md §1](./OPENAPI.md#1-cách-xem--dùng-đặc-tả), [openapi.yaml](./openapi.yaml)
 - Việc: coi `openapi.yaml` là canonical; viết test parse YAML và đối chiếu runtime `/v3/api-docs` theo `path + method + response status`. Dùng fixture/login để bảo đảm endpoint thực sự có thể gọi theo contract.
 - DoD: CI fail khi runtime contract lệch YAML; Swagger UI đủ endpoint Auth/Member/Request/Alert/LLM; một PR đổi contract buộc cập nhật YAML + DTO/test cùng lúc.
+- Trạng thái: `FoundationIT.runtimeOpenApiOperationsAndStatusesMatchCanonicalContract` so
+  khớp chính xác path + method + response statuses của 18 operations.
 
 > **🚩 Milestone M4:** backend production-ready, chạy 1 lệnh, CI xanh. Đủ điều kiện demo dù không có FE.
 
@@ -306,15 +331,16 @@
 - Việc: `useRequests` + antd `Table` (StatusTag/Priority tag), filter bar (status/category/priority/keyword), pagination + sort map sang backend. Nút "Tạo request" chỉ CLIENT.
 - DoD: 3 role thấy đúng phạm vi; filter/sort/paging gọi backend đúng; loading/empty state ok.
 - Trạng thái FE: UI responsive + URL filter/sort/page + OpenAPI-aligned API hook + explicit
-  demo adapter đã xong; giữ task mở đến khi Request backend merge và kiểm chứng phạm vi 3 role.
+  demo adapter đã xong; Request backend đã merge và API mode là mặc định. Giữ task mở đến
+  khi kiểm chứng acceptance phạm vi đủ 3 role trên FE/API thật.
 
 ### [ ] T-5.4 — RequestDetailPage (history timeline + assign + status + AI summary)
 - Owner: FE   Depends on: T-5.3, T-2.C3, T-2.C4, T-2.C2   Ước lượng: 45′
 - Refs: [FRONTEND.md §10](./FRONTEND.md#10-đặc-tả-từng-trang)
 - Việc: chi tiết + `Timeline` history. ADMIN: Modal gán (auto switch / chọn dev). ADMIN/DEV: nút đổi status **chỉ hiện transition hợp lệ**; 409 → message. Nút "AI tóm tắt".
 - DoD: gán & đổi status hoạt động, invalidate query → UI cập nhật + chuông cập nhật; nút status sai luật không hiện; 409 hiển thị message.
-- Trạng thái FE: read-only detail, workflow/assignment/AI placeholders và demo history đã xong;
-  giữ task mở vì mutation/history/LLM backend chưa merge.
+- Trạng thái FE: detail và history đã gọi API thật; workflow/assignment/AI backend cũng đã
+  merge. Task còn mở vì FE mutations và nút AI summary chưa được nối.
 
 ### [ ] T-5.5 — RequestCreatePage + nút AI gợi ý
 - Owner: FE   Depends on: T-5.2, T-2.B2, T-3.2   Ước lượng: 30′
