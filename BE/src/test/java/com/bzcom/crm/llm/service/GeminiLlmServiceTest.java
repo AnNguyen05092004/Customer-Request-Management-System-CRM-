@@ -112,4 +112,16 @@ class GeminiLlmServiceTest {
 
         assertThat(summary).isEqualTo("short description");
     }
+
+    @Test
+    void summarizeHandlesMissingDescriptionWithoutCallingLlm() {
+        RestClient.Builder builder =
+                RestClient.builder().baseUrl("https://generativelanguage.googleapis.com/v1beta/openai");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        GeminiLlmService service = new GeminiLlmService(builder.build(), objectMapper, properties);
+
+        assertThat(service.summarize(new RequestSummaryInput(null))).isEqualTo(RequestSummaryInput.EMPTY_SUMMARY);
+        assertThat(service.summarize(new RequestSummaryInput(" "))).isEqualTo(RequestSummaryInput.EMPTY_SUMMARY);
+        server.verify();
+    }
 }

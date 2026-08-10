@@ -188,9 +188,12 @@ paths:
         ADMIN thấy tất cả; CLIENT chỉ thấy request mình tạo;
         DEVELOPER chỉ thấy request được gán cho mình.
       parameters:
-        - { name: page,     in: query, schema: { type: integer, default: 0 } }
-        - { name: size,     in: query, schema: { type: integer, default: 10 } }
-        - { name: sort,     in: query, schema: { type: string, example: 'createdAt,desc' } }
+        - { name: page,     in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size,     in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 10 } }
+        - name: sort
+          in: query
+          description: 'field,direction; field hợp lệ: id, title, category, priority, status, clientId, assignedDeveloperId, createdAt, updatedAt'
+          schema: { type: string, example: 'createdAt,desc' }
         - { name: status,   in: query, schema: { $ref: '#/components/schemas/RequestStatus' } }
         - { name: category, in: query, schema: { $ref: '#/components/schemas/Category' } }
         - { name: priority, in: query, schema: { $ref: '#/components/schemas/Priority' } }
@@ -206,6 +209,7 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/PageRequestResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   /api/requests/{id}:
@@ -628,7 +632,7 @@ components:
       required: [status, expectedVersion]
       properties:
         status: { $ref: '#/components/schemas/RequestStatus' }
-        memo:   { type: string, example: 'start working' }
+        memo:   { type: string, maxLength: 255, example: 'start working' }
         expectedVersion: { type: integer, minimum: 0, example: 0 }
 
     HistoryResponse:

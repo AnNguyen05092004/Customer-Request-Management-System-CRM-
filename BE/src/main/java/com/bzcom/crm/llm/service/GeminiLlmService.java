@@ -67,6 +67,9 @@ public class GeminiLlmService implements LlmService {
 
     @Override
     public String summarize(RequestSummaryInput request) {
+        if (!request.hasDescription()) {
+            return RequestSummaryInput.EMPTY_SUMMARY;
+        }
         try {
             return complete(SummaryPrompt.SYSTEM, request.description()).trim();
         } catch (Exception exception) {
@@ -145,7 +148,7 @@ public class GeminiLlmService implements LlmService {
         return new PriorityResult(RequestPriority.MEDIUM, 0.4, "fallback default");
     }
 
-    private String truncateSummaryFallback(String description) {
+    private static String truncateSummaryFallback(String description) {
         return description.length() > 150 ? description.substring(0, 150) + "..." : description;
     }
 }

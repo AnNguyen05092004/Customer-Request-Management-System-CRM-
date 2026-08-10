@@ -183,6 +183,10 @@
 ```
 
 ### GET /api/requests?page=0&size=10&sort=createdAt,desc&status=PENDING&category=BUG&keyword=login
+
+Validation: `page >= 0`, `size=1..100`; `sort` chỉ nhận `id`, `title`, `category`, `priority`,
+`status`, `clientId`, `assignedDeveloperId`, `createdAt`, `updatedAt`. Giá trị ngoài contract trả `400`.
+
 ```jsonc
 // Response 200
 { "status": 200, "message": "success",
@@ -202,6 +206,9 @@
 ```
 
 ### PATCH /api/requests/{id}/status
+
+`memo` là tùy chọn, tối đa 255 ký tự để khớp schema PostgreSQL.
+
 ```jsonc
 // Request hợp lệ
 { "status": "IN_PROGRESS", "memo": "start working", "expectedVersion": 1 }
