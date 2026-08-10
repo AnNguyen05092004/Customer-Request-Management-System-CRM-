@@ -20,6 +20,7 @@ import com.bzcom.crm.request.repository.RequestRepository;
 import com.bzcom.crm.request.repository.RequestSpecification;
 import com.bzcom.crm.request.security.RequestAccessPolicy;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class RequestService {
+
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
+            "id",
+            "title",
+            "category",
+            "priority",
+            "status",
+            "clientId",
+            "assignedDeveloperId",
+            "createdAt",
+            "updatedAt");
 
     private final RequestRepository requestRepository;
     private final MemberRepository memberRepository;
@@ -64,9 +77,25 @@ public class RequestService {
             RequestPriority priority,
             String keyword,
             CurrentUser currentUser) {
+        validatePageable(pageable);
         Specification<Request> spec = RequestSpecification.build(currentUser, status, category, priority, keyword);
         Page<Request> page = requestRepository.findAll(spec, pageable);
         return PageResponse.from(page, requestMapper::toResponse);
+    }
+
+    private static void validatePageable(Pageable pageable) {
+        if (pageable.getPageNumber() < 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "page must be greater than or equal to 0");
+        }
+        if (pageable.getPageSize() < 1 || pageable.getPageSize() > MAX_PAGE_SIZE) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "size must be between 1 and " + MAX_PAGE_SIZE);
+        }
+        pageable.getSort().forEach(order -> {
+            if (!ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
+                throw new BusinessException(
+                        ErrorCode.INVALID_REQUEST, "Unsupported sort property: " + order.getProperty());
+            }
+        });
     }
 
     @Transactional(readOnly = true)

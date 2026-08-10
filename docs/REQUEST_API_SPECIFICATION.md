@@ -149,6 +149,9 @@ Mọi thao tác nghiệp vụ thay đổi dữ liệu phải nằm trong cùng *
   - `category` (string, enum: `BUG`, `FEATURE`, `INQUIRY`)
   - `priority` (string, enum: `HIGH`, `MEDIUM`, `LOW`)
   - `keyword` (string, tìm kiếm không phân biệt hoa thường trong `title` hoặc `description`)
+- **Validation:** `page >= 0`, `size=1..100`; sort field chỉ gồm `id`, `title`, `category`,
+  `priority`, `status`, `clientId`, `assignedDeveloperId`, `createdAt`, `updatedAt`. Giá trị ngoài
+  contract trả `400 Bad Request`.
 - **Response `200 OK`:** `ApiResponse<PageResponse<RequestResponse>>`
 
 ---
@@ -191,6 +194,7 @@ Mọi thao tác nghiệp vụ thay đổi dữ liệu phải nằm trong cùng *
     "expectedVersion": 1
   }
   ```
+- `memo` không bắt buộc, tối đa 255 ký tự.
 - **Response `200 OK`:** `ApiResponse<RequestResponse>`
 - **Mã lỗi đặc thù:**
   - `403 Forbidden`: Người gọi không phải ADMIN và không phải Developer được gán.

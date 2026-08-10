@@ -47,6 +47,9 @@ public class MockLlmService implements LlmService {
 
     @Override
     public String summarize(RequestSummaryInput request) {
+        if (!request.hasDescription()) {
+            return RequestSummaryInput.EMPTY_SUMMARY;
+        }
         String description = request.description();
         String trimmed = description.length() > 150 ? description.substring(0, 150) + "..." : description;
         return "[mock] " + trimmed;

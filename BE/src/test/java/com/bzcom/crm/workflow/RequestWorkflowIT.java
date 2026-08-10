@@ -245,4 +245,52 @@ class RequestWorkflowIT {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Request version conflict: expected 0 but found 1"));
     }
+
+    @Test
+    @DisplayName("Invalid pagination, sort and oversized status memo return 400")
+    void rejectsInvalidListAndWorkflowInputs() throws Exception {
+        mockMvc.perform(get("/api/requests")
+                        .param("sort", "doesNotExist,asc")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Unsupported sort property: doesNotExist"));
+
+        mockMvc.perform(get("/api/requests").param("size", "101").header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("size must be between 1 and 100"));
+
+        RequestCreateRequest createRequest =
+                new RequestCreateRequest("Memo validation", null, RequestCategory.BUG, RequestPriority.MEDIUM);
+        MvcResult createResult = mockMvc.perform(post("/api/requests")
+                        .header("Authorization", "Bearer " + client1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        long requestId = objectMapper
+                .readTree(createResult.getResponse().getContentAsString())
+                .path("data")
+                .path("id")
+                .asLong();
+
+        mockMvc.perform(get("/api/requests/" + requestId + "/summary")
+                        .header("Authorization", "Bearer " + client1Token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.summary").value("No description provided."));
+
+        AssignRequest assignRequest = new AssignRequest(false, dev1Member.getId(), 0);
+        mockMvc.perform(patch("/api/requests/" + requestId + "/assign")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(assignRequest)))
+                .andExpect(status().isOk());
+
+        StatusUpdateRequest statusRequest = new StatusUpdateRequest(RequestStatus.IN_PROGRESS, "x".repeat(256), 1);
+        mockMvc.perform(patch("/api/requests/" + requestId + "/status")
+                        .header("Authorization", "Bearer " + dev1Token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("memo: size must be between 0 and 255"));
+    }
 }

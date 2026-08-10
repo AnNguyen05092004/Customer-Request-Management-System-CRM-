@@ -52,4 +52,10 @@ class MockLlmServiceTest {
         String summary = service.summarize(new RequestSummaryInput(longDescription));
         assertThat(summary).startsWith("[mock] ").hasSize(7 + 150 + 3);
     }
+
+    @Test
+    void summarizeHandlesMissingDescription() {
+        assertThat(service.summarize(new RequestSummaryInput(null))).isEqualTo(RequestSummaryInput.EMPTY_SUMMARY);
+        assertThat(service.summarize(new RequestSummaryInput("  "))).isEqualTo(RequestSummaryInput.EMPTY_SUMMARY);
+    }
 }
