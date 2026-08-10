@@ -36,18 +36,18 @@ feature/*  ← nhánh cá nhân, tách từ develop
 
 **Đặt tên feature branch** (khớp phân công 4 người):
 ```
-feature/auth-jwt          (A — auth, member, common, config)
-feature/request-crud      (B — request CRUD, filter, stats)
+feature/auth-member       (A — auth, member, security liên quan)
+feature/request-core      (B — request CRUD, filter, paging, stats)
 feature/workflow-logic    (C — assign, status, history)
 feature/alert-llm         (D — alert, llm, swagger, CI)
 ```
 
 Vòng đời một nhánh:
 ```bash
-git checkout develop && git pull
-git checkout -b feature/request-crud
+git switch develop && git pull --ff-only origin develop
+git switch -c feature/request-core
 # ... code + commit ...
-git push -u origin feature/request-crud
+git push -u origin feature/request-core
 # → mở PR trên GitHub vào develop
 ```
 
@@ -73,19 +73,26 @@ Format: `type: mô tả ngắn (tiếng Anh hoặc Việt, thì hiện tại)`
 
 1. Push feature branch → mở PR vào `develop`.
 2. Điền **PR template** (§6): mô tả thay đổi + checklist.
-3. **Bắt buộc ≥1 review** của thành viên khác mới được merge (đề yêu cầu).
+3. Với team nhiều người, yêu cầu ≥1 review của thành viên khác trước khi merge. Cấu hình
+   hiện tại bắt buộc bằng GitHub trên `main`; `develop` để 0 approval vì leader đang thao tác
+   một mình và GitHub không tính self-approval, nhưng vẫn phải có PR + ba CI check xanh.
 4. Reviewer kiểm: logic đúng? có test? có Swagger? theo convention?
 5. CI phải **xanh** (build + test pass) mới merge được.
-6. Merge → xoá feature branch.
+6. Sau merge, có thể xoá branch nhỏ đã hết giá trị. Riêng các branch UI milestone được liệt
+   kê ở [FRONTEND.md §13.1](./FRONTEND.md#131-branch-triển-khai-và-bằng-chứng-git-flow)
+   phải giữ trên remote để làm bằng chứng network graph/demo doanh nghiệp.
 
 > **Ai review ai** (gợi ý cho 4 người): A↔B, C↔D chéo nhau; phần logic nặng (C) nên có 2 người xem. Không tự approve PR của chính mình.
 
 ## 4. Branch protection
 
-Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và** `develop`:
+Cấu hình thực tế trên GitHub (`Settings → Branches`) cho `main` và `develop`:
 - ☑ Require a pull request before merging
-- ☑ Require approvals: **1**
-- ☑ Require status checks to pass (chọn job `build` của CI)
+- `main`: ☑ Require approvals: **1**
+- `develop`: Require approvals: **0** (owner-only hiện tại; working agreement vẫn yêu cầu
+  peer review khi team cùng làm)
+- ☑ Require status checks to pass (chọn `Backend verify`, `Frontend verify` và
+  `Full-stack Docker smoke` từ GitHub Actions)
 - ☑ Do not allow bypassing the above settings
 - ☑ Restrict who can push (không ai push trực tiếp)
 
@@ -93,15 +100,27 @@ Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và
 
 ## 5. GitHub Actions CI
 
-`.github/workflows/backend-ci.yml` — chạy Maven Wrapper trong `BE/` trên **mỗi PR** vào `develop`/`main`:
+Hai workflow chạy trên **mỗi PR/push** vào `develop`/`main`:
+
+- `.github/workflows/backend-ci.yml` → status check `Backend verify`, chạy
+  `BE/./mvnw -B verify`, sau đó check `Full-stack Docker smoke` build và khởi động
+  PostgreSQL + backend + frontend bằng Compose;
+- `.github/workflows/frontend-ci.yml` → status check `Frontend verify`, chạy
+  `npm ci` và `npm run verify` trong `FE/`.
+
+Tên job/check phải duy nhất giữa các workflow. Không đặt cả hai job cùng tên `verify`, vì
+branch protection sẽ không thể hiện rõ backend và frontend là hai điều kiện độc lập.
+
+Workflow backend có cấu trúc chính:
 
 ```yaml
-name: CI
+name: Backend CI
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main, develop]
 jobs:
-  build:
+  backend-verify:
+    name: Backend verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -115,28 +134,36 @@ jobs:
         run: ./mvnw -B verify
 ```
 
-> Unit test không cần DB; integration test dùng **Testcontainers PostgreSQL** nên GitHub Actions phải có Docker (ubuntu-latest đáp ứng). Nhờ vậy Flyway, PostgreSQL SQL và transaction được kiểm chứng trên đúng dialect production, không có false confidence do H2. PR fail test hiện **đỏ** ngay → không merge được.
+> Unit test không cần DB; integration test dùng **Testcontainers PostgreSQL** nên GitHub Actions phải có Docker (ubuntu-latest đáp ứng). Nhờ vậy Flyway, PostgreSQL SQL và transaction được kiểm chứng trên đúng dialect production, không có false confidence do H2. Docker smoke còn bắt các lỗi đóng gói dependency, biến môi trường, healthcheck và reverse proxy mà Maven test riêng lẻ không phát hiện. PR fail một trong ba check sẽ **đỏ** và không được merge.
 
 ## 6. PR template
 
 `.github/pull_request_template.md`:
 
 ```markdown
-## Thay đổi gì
-- 
+## Task và phạm vi
+- Task: T-x.y
+- Refs: docs/...#section
 
-## Loại thay đổi
-- [ ] feat  - [ ] fix  - [ ] refactor  - [ ] docs  - [ ] test  - [ ] chore
+## Thay đổi
+- ...
 
-## Checklist
-- [ ] Đã test luồng chính (có unit/integration test)
-- [ ] Đã cập nhật Swagger annotation (nếu đổi API)
-- [ ] Trả đúng response envelope + HTTP status
-- [ ] Không có breaking change (hoặc đã ghi rõ bên dưới)
-- [ ] CI xanh
+## Đồng bộ contract/docs
+- [ ] Không thay đổi contract/docs
+- [ ] Đã cập nhật các nguồn liên quan: ...
+- [ ] Đã kiểm tra link task ↔ docs
+- Breaking change/migration note: ...
 
-## Ghi chú cho reviewer
-- 
+## Kiểm chứng
+- [ ] Backend: `cd BE && ./mvnw -B verify` (nếu liên quan)
+- [ ] Frontend: `cd FE && npm run verify` (nếu liên quan)
+- [ ] Đã kiểm tra luồng chính và luồng lỗi/quyền liên quan
+
+## Contract checklist
+- [ ] Không lệch `docs/openapi.yaml`
+- [ ] Không trả entity/dữ liệu nhạy cảm; không commit secret
+- [ ] Migration append-only
+- [ ] Chỉ tick task hoàn thành khi đạt toàn bộ DoD
 ```
 
 ## 7. Chống xung đột merge (cho nhóm 4 người)
@@ -149,7 +176,9 @@ jobs:
 | Develop bị "trôi" xa feature | Rebase/merge `develop` vào feature branch mỗi ngày |
 | Merge dồn phút chót | Merge sớm & nhỏ, không dồn 1 PR khổng lồ cuối dự án |
 
-**Quy tắc vàng:** trước khi bắt đầu ngày làm việc → `git checkout develop && git pull && git checkout feature/xxx && git merge develop`.
+**Quy tắc vàng:** trước khi bắt đầu ngày làm việc, cập nhật `develop`, quay lại feature
+branch rồi merge `develop` vào feature. Xem lệnh đầy đủ và cách xử lý conflict trong
+[TEAM_DEVELOPMENT_GUIDE.md](./TEAM_DEVELOPMENT_GUIDE.md).
 
 ## 8. Chuẩn bị bằng chứng cho slide 10
 

@@ -183,7 +183,7 @@
 - **Luồng:** hệ thống áp filter phạm vi theo role (BR-02/03) rồi mới áp filter tổ hợp + phân trang + sort. Trả `200` + `Page`.
 
 ### UC-05 — LLM auto-classify
-- **Actor:** ADMIN/CLIENT · `POST /api/requests/classify` body `{description}`
+- **Actor:** mọi member đã xác thực (ADMIN/DEVELOPER/CLIENT) · `POST /api/requests/classify` body `{description}`
 - **Luồng:** gọi `LlmService.classify(description)` → JSON `{category, confidence, reason}`. Nếu LLM lỗi/không parse được → fallback rule keyword (BR-13, xem [LLM.md](./LLM.md)). Trả `200`.
 
 ## 9. Acceptance Criteria & truy vết rubric
@@ -216,7 +216,7 @@
 
 **Out-of-scope (nói rõ trong slide để tránh bị hỏi lạc đề):**
 - Frontend React là **lớp trình diễn bổ sung** (không nằm trong rubric), làm sau khi backend ổn — xem [FRONTEND.md](./FRONTEND.md). Swagger UI vẫn là phần demo API chính thức.
-- Không microservices thật (dùng modular monolith — xem [ARCHITECTURE.md](./ARCHITECTURE.md#2-phong-c%C3%A1ch-ki%E1%BA%BFn-tr%C3%BAc)).
+- Không microservices thật (dùng modular monolith — xem [ARCHITECTURE.md](./ARCHITECTURE.md#2-phong-c%C3%A1ch-ki%E1%BA%BFn-tr%C3%BAc-modular-monolith)).
 - Không có UI quản trị để tạo ADMIN/DEVELOPER trong MVP: các tài khoản nội bộ được provision qua seed/migration; endpoint public chỉ tạo CLIENT để tránh privilege escalation.
 - Không tích hợp email/Kakao thật (alert lưu trong DB, đọc qua API).
 - Không có payment, SLA, audit nâng cao.

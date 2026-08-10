@@ -145,7 +145,7 @@
 { "email": "admin@bzcom.com", "password": "1234" }
 // Response 200
 { "status": 200, "message": "success",
-  "data": { "accessToken": "eyJ...", "refreshToken": "eyJ...",
+  "data": { "accessToken": "eyJ...", "refreshToken": "<opaque-refresh-token>",
             "tokenType": "Bearer", "role": "ADMIN" } }
 ```
 
@@ -153,6 +153,8 @@
 ```jsonc
 // Request body dùng cho cả hai endpoint (refresh token là opaque credential)
 { "refreshToken": "<refresh-token>" }
+
+// Validation: 32–512 ký tự; field lạ bị reject với 400.
 
 // POST /api/auth/refresh → 200: trả accessToken và refreshToken MỚI.
 // Token refresh cũ bị revoke nguyên tử; cùng một token chỉ có một refresh thành công.
@@ -166,7 +168,7 @@
 { "email": "client2@bzcom.com", "password": "1234", "name": "Client Two" }
 // Response 201  (KHÔNG bao giờ trả password)
 { "status": 201, "message": "created",
-  "data": { "id": 5, "email": "dev1@bzcom.com", "name": "Dev One", "role": "DEVELOPER" } }
+  "data": { "id": 5, "email": "client2@bzcom.com", "name": "Client Two", "role": "CLIENT" } }
 ```
 
 ### POST /api/requests  (HIGH → tự sinh alert cho ADMIN)
@@ -181,6 +183,10 @@
 ```
 
 ### GET /api/requests?page=0&size=10&sort=createdAt,desc&status=PENDING&category=BUG&keyword=login
+
+Validation: `page >= 0`, `size=1..100`; `sort` chỉ nhận `id`, `title`, `category`, `priority`,
+`status`, `clientId`, `assignedDeveloperId`, `createdAt`, `updatedAt`. Giá trị ngoài contract trả `400`.
+
 ```jsonc
 // Response 200
 { "status": 200, "message": "success",
@@ -200,6 +206,9 @@
 ```
 
 ### PATCH /api/requests/{id}/status
+
+`memo` là tùy chọn, tối đa 255 ký tự để khớp schema PostgreSQL.
+
 ```jsonc
 // Request hợp lệ
 { "status": "IN_PROGRESS", "memo": "start working", "expectedVersion": 1 }

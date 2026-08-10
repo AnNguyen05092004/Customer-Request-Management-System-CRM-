@@ -50,8 +50,8 @@
 ```
 ┌──────────┐   HTTP/JWT   ┌───────────────────┐   HTTPS   ┌──────────────┐
 │  ADMIN   │─────────────▶│                   │──────────▶│ LLM Provider │
-│ DEVELOPER│              │   Bzcom CRM API   │           │ (OpenAI/     │
-│  CLIENT  │◀─────────────│   (Spring Boot)   │◀──────────│  Claude)     │
+│ DEVELOPER│              │   Bzcom CRM API   │           │  (Gemini)    │
+│  CLIENT  │◀─────────────│   (Spring Boot)   │◀──────────│              │
 └──────────┘   JSON       └─────────┬─────────┘           └──────────────┘
  (qua Swagger/Postman)              │ JDBC
                                     ▼
@@ -65,7 +65,7 @@
 |---|---|---|
 | CRM API | Spring Boot 3.5.5 (Java 21) | Toàn bộ business logic, REST endpoints, Swagger |
 | Database | PostgreSQL 16 | Lưu trữ bền vững; Flyway quản version schema |
-| LLM Provider | OpenAI/Claude API (external) | Phân loại/tóm tắt — có **mock** thay thế khi offline |
+| LLM Provider | Google Gemini API (external) | Phân loại/tóm tắt — có **mock deterministic** khi `llm.enabled=false` và fallback khi provider lỗi |
 
 ## 4. Kiến trúc phân lớp
 
@@ -120,7 +120,10 @@ BE/src/main/java/com/bzcom/crm
 │   ├── entity/RefreshToken.java, repository/RefreshTokenRepository.java
 │   └── dto/request/ + dto/response/
 ├── member/                         (A)
-│   └── controller/ service/ repository/ entity/ dto/{request,response}/ mapper/
+│   ├── controller/ service/ repository/ mapper/
+│   ├── entity/Member.java
+│   ├── domain/MemberRole.java, MemberEmail.java
+│   └── dto/{request,response}/
 ├── request/                        (B)
 │   ├── controller/RequestController.java
 │   ├── service/RequestService.java, RequestStatsService.java
@@ -138,12 +141,12 @@ BE/src/main/java/com/bzcom/crm
 │   ├── entity/Alert.java
 │   └── dto/response/
 └── llm/                            (D)
-    ├── service/LlmService.java (interface) + OpenAiLlmService + MockLlmService
+    ├── service/LlmService.java (interface) + GeminiLlmService + MockLlmService
     ├── prompt/ClassifyPrompt.java
     └── dto/{request,response}/
 ```
 
-**Giao tiếp giữa module:** qua **interface của service** (vd `workflow` gọi `AlertService.create(...)`, `llm` chỉ expose `LlmService`). Không module nào chạm entity của module khác trực tiếp → giữ ranh giới bounded context.
+**Giao tiếp giữa module:** ưu tiên **public service/interface** của module sở hữu (vd `workflow` gọi `AlertService.create(...)`, `MemberService.recordDeveloperCompletion(...)`; `llm` chỉ expose `LlmService`). JPA relationship có thể tham chiếu entity liên quan (`Request` → `Member`) vì đây là monolith, nhưng module khác không tự sửa field hoặc dùng repository của module sở hữu để thay đổi nghiệp vụ; mutation đi qua domain method/service rõ ràng.
 
 ## 6. Cross-cutting concerns
 
@@ -240,31 +243,32 @@ DB_USERNAME=bzcom
 DB_PASSWORD=<secret>
 POSTGRES_HOST_PORT=5433     # cổng DB publish ra host; nội bộ Compose vẫn là 5432
 JWT_SECRET=<chuỗi bí mật đủ dài>
-LLM_ENABLED=false            # biến sẽ map vào llm.enabled khi tích hợp LLM
-OPENAI_API_KEY=              # chỉ cần khi LLM_ENABLED=true
+LLM_ENABLED=false            # false dùng mock deterministic; true gọi Gemini
+GEMINI_API_KEY=              # bắt buộc khi LLM_ENABLED=true; không commit key thật
 ```
 > Secret **không commit** vào repo; `application.yml` đọc qua `${ENV}`.
 
 ## 10. Kiến trúc triển khai (Docker)
 
 ```
-┌─────────────────── docker compose ───────────────────┐
-│                                                       │
-│   ┌───────────────┐        ┌────────────────────┐    │
-│   │   app          │  JDBC  │   db (postgres:16) │    │
-│   │ (spring boot)  │───────▶│   volume: pgdata   │    │
-│   │  :8080         │        │   :5432            │    │
-│   └───────┬────────┘        └────────────────────┘    │
-│           │ depends_on: db (healthcheck)              │
-└───────────┼───────────────────────────────────────────┘
-            ▼
-      host :8080 → Swagger UI
+┌──────────────────────── docker compose ────────────────────────┐
+│                                                               │
+│  frontend (Nginx) ── /api ──▶ backend (Spring Boot) ── JDBC ─▶ db │
+│       :80                         :8080                  :5432  │
+│        │                    depends_on healthy            │     │
+│        └──── depends_on backend healthy ──────────────────┘     │
+└────────┬──────────────────────────┬─────────────────────────────┘
+         ▼                          ▼
+ host :5173 → CRM UI         host :8080 → Swagger/API
 ```
 
-- `Dockerfile`: multi-stage (build bằng Maven → chạy trên JRE slim) để image gọn.
-- `db` có **healthcheck**; `app` `depends_on` `db` khoẻ mới start → tránh lỗi kết nối lúc khởi động.
+- `BE/Dockerfile`: multi-stage (Maven → JRE); `FE/Dockerfile`: multi-stage (Node → Nginx).
+- `db`, `backend`, `frontend` đều có healthcheck; service sau chỉ start khi dependency khỏe.
+- Nginx có SPA fallback và reverse proxy `/api` tới `backend:8080`; frontend Docker gọi API
+  same-origin, còn `npm run dev` gọi thẳng `localhost:8080` qua CORS.
 - Flyway migrate tự động lúc app start; schema ở `db/migration`, seed demo ở `db/demo` và chỉ được bật bởi profile `dev`/`docker`.
-- Lệnh demo duy nhất trong thư mục `BE/`: `docker compose up --build`.
+- Lệnh full-stack duy nhất tại root repository: `docker compose up --build`.
+- `BE/compose.yaml` được giữ cho thành viên chỉ muốn chạy backend + database.
 
 ---
 

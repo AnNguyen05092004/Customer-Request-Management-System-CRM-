@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.0.1
 info:
   title: Bzcom CRM — Customer Request Management System API
   description: >
@@ -90,6 +90,7 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/TokenResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   # ─────────────────────────── MEMBER ───────────────────────────
@@ -187,9 +188,12 @@ paths:
         ADMIN thấy tất cả; CLIENT chỉ thấy request mình tạo;
         DEVELOPER chỉ thấy request được gán cho mình.
       parameters:
-        - { name: page,     in: query, schema: { type: integer, default: 0 } }
-        - { name: size,     in: query, schema: { type: integer, default: 10 } }
-        - { name: sort,     in: query, schema: { type: string, example: 'createdAt,desc' } }
+        - { name: page,     in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size,     in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 10 } }
+        - name: sort
+          in: query
+          description: 'field,direction; field hợp lệ: id, title, category, priority, status, clientId, assignedDeveloperId, createdAt, updatedAt'
+          schema: { type: string, example: 'createdAt,desc' }
         - { name: status,   in: query, schema: { $ref: '#/components/schemas/RequestStatus' } }
         - { name: category, in: query, schema: { $ref: '#/components/schemas/Category' } }
         - { name: priority, in: query, schema: { $ref: '#/components/schemas/Priority' } }
@@ -205,6 +209,7 @@ paths:
                   - type: object
                     properties:
                       data: { $ref: '#/components/schemas/PageRequestResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   /api/requests/{id}:
@@ -380,11 +385,7 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [description]
-              properties:
-                description: { type: string, example: 'When I click login, page shows 500 error' }
+            schema: { $ref: '#/components/schemas/DescriptionRequest' }
       responses:
         '200':
           description: Kết quả phân loại
@@ -407,11 +408,7 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              required: [description]
-              properties:
-                description: { type: string }
+            schema: { $ref: '#/components/schemas/DescriptionRequest' }
       responses:
         '200':
           description: Priority gợi ý
@@ -528,16 +525,18 @@ components:
 
     LoginRequest:
       type: object
+      additionalProperties: false
       required: [email, password]
       properties:
         email:    { type: string, format: email, example: admin@bzcom.com }
-        password: { type: string, example: '1234' }
+        password: { type: string, maxLength: 72, example: '1234' }
 
     RefreshTokenRequest:
       type: object
+      additionalProperties: false
       required: [refreshToken]
       properties:
-        refreshToken: { type: string, minLength: 32, description: 'opaque refresh token đã nhận khi login/refresh' }
+        refreshToken: { type: string, minLength: 32, maxLength: 512, description: 'opaque refresh token đã nhận khi login/refresh' }
 
     TokenResponse:
       type: object
@@ -578,12 +577,19 @@ components:
         category:    { $ref: '#/components/schemas/Category' }
         priority:    { $ref: '#/components/schemas/Priority' }
 
+    DescriptionRequest:
+      type: object
+      additionalProperties: false
+      required: [description]
+      properties:
+        description: { type: string, minLength: 1, example: 'When I click login, page shows 500 error' }
+
     RequestResponse:
       type: object
       properties:
         id:          { type: integer, format: int64 }
         title:       { type: string }
-        description: { type: string }
+        description: { type: string, nullable: true }
         category:    { $ref: '#/components/schemas/Category' }
         priority:    { $ref: '#/components/schemas/Priority' }
         status:      { $ref: '#/components/schemas/RequestStatus' }
@@ -625,7 +631,7 @@ components:
       required: [status, expectedVersion]
       properties:
         status: { $ref: '#/components/schemas/RequestStatus' }
-        memo:   { type: string, example: 'start working' }
+        memo:   { type: string, maxLength: 255, example: 'start working' }
         expectedVersion: { type: integer, minimum: 0, example: 0 }
 
     HistoryResponse:
@@ -640,7 +646,7 @@ components:
         toStatus:
           allOf: [{ $ref: '#/components/schemas/RequestStatus' }]
           nullable: true
-        memo:       { type: string }
+        memo:       { type: string, nullable: true }
         changedAt:  { type: string, format: date-time }
 
     AlertResponse:
@@ -656,12 +662,12 @@ components:
     StatsResponse:
       type: object
       properties:
-        total:          { type: integer, example: 42 }
-        completed:      { type: integer, example: 18 }
-        completionRate: { type: number, format: float, example: 0.43 }
+        total:          { type: integer, format: int64, example: 42 }
+        completed:      { type: integer, format: int64, example: 18 }
+        completionRate: { type: number, format: double, example: 0.43 }
         byCategory:
           type: object
-          additionalProperties: { type: integer }
+          additionalProperties: { type: integer, format: int64 }
           example: { BUG: 20, FEATURE: 15, INQUIRY: 7 }
         byDeveloper:
           type: array

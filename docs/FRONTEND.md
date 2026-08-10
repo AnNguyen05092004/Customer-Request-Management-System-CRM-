@@ -40,14 +40,15 @@ Phủ toàn bộ endpoint trong [openapi.yaml](./openapi.yaml). UI hiển thị 
 
 | Lớp | Công nghệ | Lý do |
 |---|---|---|
-| Build tool | **Vite** | Dev server cực nhanh, cấu hình tối giản |
-| Framework | **React 18** | Chuẩn phổ biến |
-| Ngôn ngữ | **TypeScript** | Type-safe khi khớp DTO backend → bắt lỗi lúc compile, tự động gợi ý field |
+| Runtime | **Node.js 22 LTS** | Khóa bằng `.nvmrc` và `engines` để local/CI giống nhau |
+| Build tool | **Vite 7** | Ổn định trên Node 22, dev server nhanh, cấu hình tối giản |
+| Framework | **React 19** | Bản stable hiện hành, component model phổ biến |
+| Ngôn ngữ | **TypeScript 5.9 strict** | Type-safe khi khớp DTO backend; dùng dòng ổn định tương thích tooling |
 | Data fetching | **TanStack Query (React Query) v5** | Cache, loading/error state, invalidation sau mutation — bỏ hẳn boilerplate `useState/useEffect` |
 | HTTP | **axios** | Interceptor gắn JWT + xử lý 401 tập trung |
-| Routing | **React Router v6** | Nested route + protected route theo role |
+| Routing | **React Router v7** | Declarative nested route + protected route theo role |
 | UI kit | **Ant Design v5** | Sẵn Table (paging/sort/filter), Form (validation), Tag, Badge, message — hợp CRM, lên UI rất nhanh |
-| Biểu đồ | **Ant Design Charts** (hoặc Recharts) | Vẽ dashboard stats |
+| Biểu đồ | **CSS conic-gradient + semantic bars** | Đủ cho 2 biểu đồ MVP, không tăng dependency/bundle; phép tính có unit test và nhãn accessibility |
 | Form | **Ant Design Form** + rule | Validation client khớp validation backend |
 
 > **Vì sao Ant Design (không Tailwind/shadcn)?** CRM = nhiều bảng + form + filter. Ant Design cho sẵn `Table` với phân trang/sắp xếp/lọc server-side, `Form` với validation → **tiết kiệm hàng giờ** so với tự ghép component. Đây là lựa chọn tối ưu thời gian cho bài OJT.
@@ -59,53 +60,58 @@ Phủ toàn bộ endpoint trong [openapi.yaml](./openapi.yaml). UI hiển thị 
 Feature-based, song song với package-by-feature của backend (dễ đối chiếu, mỗi người sở hữu 1 feature):
 
 ```
-frontend/
+FE/
 ├── index.html
 ├── vite.config.ts
 ├── tsconfig.json
 ├── package.json
 ├── .env.example              # VITE_API_BASE_URL=http://localhost:8080/api
-├── Dockerfile                # multi-stage build → nginx phục vụ static
-├── nginx.conf                # SPA fallback + proxy /api (tuỳ chọn)
+├── .nvmrc                    # Node 22
+├── ui_design_specification/  # ảnh/code thiết kế tham chiếu, không phải runtime source
 └── src/
-    ├── main.tsx              # mount React, QueryClientProvider, AntdApp, Router
-    ├── App.tsx               # định nghĩa routes
-    ├── config/
-    │   └── queryClient.ts
+    ├── main.tsx              # mount providers
+    ├── app/                  # router + queryClient + error boundary
+    ├── config/               # runtime env đã validate
     ├── lib/
-    │   └── apiClient.ts      # axios instance + interceptor + unwrap envelope
+    │   ├── apiClient.ts      # axios instances + refresh/retry + unwrap envelope
+    │   └── apiError.ts       # chuẩn hóa lỗi transport/backend
     ├── types/
     │   └── api.ts            # types khớp DTO backend (§5)
     ├── auth/
     │   ├── AuthContext.tsx   # lưu token + user role, login/logout
+    │   ├── session.ts        # validated single-key local session store
     │   ├── useAuth.ts
-    │   └── ProtectedRoute.tsx # guard theo role
+    │   └── RouteGuards.tsx   # guard đăng nhập + role
     ├── components/
-    │   ├── AppLayout.tsx     # sidebar menu (ẩn/hiện theo role) + header + AlertBell
-    │   ├── AlertBell.tsx     # Badge chuông + popover danh sách alert
-    │   └── StatusTag.tsx     # Tag màu theo status/priority/category
+    │   ├── AppLayout.tsx     # sidebar/menu theo role + header responsive
+    │   ├── PageHeader.tsx
+    │   ├── PageStates.tsx
+    │   └── ResourceTags.tsx  # Tag màu theo status/priority/category
     ├── features/
-    │   ├── auth/pages/LoginPage.tsx
+    │   ├── auth/
+    │   │   ├── api.ts
+    │   │   └── LoginPage.tsx
     │   ├── members/
-    │   │   ├── api.ts        # hàm gọi + hooks React Query
-    │   │   └── pages/MemberListPage.tsx, MemberDetailPage.tsx, RegisterPage.tsx
+    │   │   ├── api.ts        # hàm gọi HTTP
+    │   │   ├── queries.ts    # hooks React Query
+    │   │   └── MemberListPage.tsx, MemberDetailPage.tsx, RegisterPage.tsx
     │   ├── requests/
-    │   │   ├── api.ts
-    │   │   └── pages/RequestListPage.tsx, RequestDetailPage.tsx, RequestCreatePage.tsx
-    │   ├── stats/
-    │   │   ├── api.ts
-    │   │   └── pages/StatsDashboardPage.tsx
-    │   └── alerts/
-    │       └── api.ts
+    │   │   ├── api.ts, queries.ts, demoData.ts
+    │   │   └── RequestListPage.tsx, RequestDetailPage.tsx
+    ├── test/                 # Vitest setup/helpers
     └── utils/
         └── format.ts         # format ngày, enum → nhãn tiếng Việt
 ```
+
+Request API có hai mode rõ ràng: `VITE_REQUEST_DATA_MODE=api` là mặc định và gọi backend thật;
+`demo` chỉ bật rõ ràng khi phát triển UI cô lập, dùng dữ liệu deterministic và luôn hiện nhãn
+**Demo data**. Không fallback âm thầm từ API sang mock vì điều đó có thể che lỗi contract.
 
 ## 4. Kiến trúc tầng FE
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  Pages (features/*/pages)                         │  UI + gọi hooks
+│  Pages (features/*/*Page.tsx)                     │  UI + gọi hooks
 ├─────────────────────────────────────────────────┤
 │  Hooks React Query (features/*/api.ts)            │  useQuery/useMutation + cache
 ├─────────────────────────────────────────────────┤
@@ -144,7 +150,7 @@ export interface TokenResponse {
 export interface MemberResponse { id: number; email: string; name: string; role: Role; createdAt: string; }
 
 export interface RequestResponse {
-  id: number; title: string; description: string;
+  id: number; title: string; description: string | null;
   category: Category; priority: Priority; status: RequestStatus;
   clientId: number; assignedDeveloperId: number | null; version: number;
   createdAt: string; updatedAt: string;
@@ -161,7 +167,7 @@ export type AssignRequest =
 export interface HistoryResponse {
   id: number; requestId: number; changedBy: number;
   fromStatus: RequestStatus | null; toStatus: RequestStatus | null;
-  memo: string; changedAt: string;
+  memo: string | null; changedAt: string;
 }
 
 export interface AlertResponse {
@@ -185,123 +191,95 @@ export interface ClassifyResult { category: Category; confidence: number; reason
 `src/lib/apiClient.ts`:
 
 ```typescript
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import type { ApiResponse, TokenResponse } from '../types/api';
-
-export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, // http://localhost:8080/api
-});
-
-// Client riêng, không interceptor: refresh/logout không được gửi Bearer access token cũ.
-const authClient = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL });
-const isAuthPath = (url = '') => ['/auth/login', '/auth/refresh', '/auth/logout'].some((p) => url.includes(p));
+export const publicApiClient = axios.create({ baseURL: env.apiBaseUrl, timeout: 10_000 });
+export const apiClient = axios.create({ baseURL: env.apiBaseUrl, timeout: 10_000 });
 let refreshInFlight: Promise<TokenResponse> | null = null;
 
-// Gắn JWT vào mọi request
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token && !isAuthPath(config.url)) config.headers.Authorization = `Bearer ${token}`;
+  const session = sessionStore.read();
+  if (session) config.headers.Authorization = `${session.tokenType} ${session.accessToken}`;
   return config;
 });
 
-// Unwrap envelope + xử lý lỗi tập trung
 apiClient.interceptors.response.use(
-  (res) => res,
-  async (error: AxiosError<ApiResponse<null>>) => {
-    const status = error.response?.status;
-    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
-    if (status === 401 && original && !original._retry && !isAuthPath(original.url)) {
+  (response) => response,
+  async (error) => {
+    const original = error.config as RetryableRequestConfig | undefined;
+    if (error.response?.status === 401 && original && !original._retry && sessionStore.read()) {
       original._retry = true;
       try {
-        refreshInFlight ??= authClient.post<ApiResponse<TokenResponse>>('/auth/refresh', {
-          refreshToken: localStorage.getItem('refreshToken'),
-        }).then((res) => res.data.data);
+        refreshInFlight ??= refreshTokens();
         const tokens = await refreshInFlight;
-        localStorage.setItem('accessToken', tokens.accessToken);
-        localStorage.setItem('refreshToken', tokens.refreshToken);
-        localStorage.setItem('role', tokens.role);
-        original.headers.Authorization = `Bearer ${tokens.accessToken}`;
+        original.headers.Authorization = `${tokens.tokenType} ${tokens.accessToken}`;
         return apiClient(original);
-      } catch {
-        // Refresh thất bại: phiên đã hết hoặc refresh token bị revoke.
+      } catch (refreshError) {
+        sessionStore.clear();
+        notifySessionExpired();
+        return Promise.reject(toApiError(refreshError));
       } finally {
         refreshInFlight = null;
       }
     }
-    if (status === 401) {
-      localStorage.clear();
-      window.location.href = '/login'; // token hết hạn → về login
-    }
-    // message lỗi từ envelope backend {status,message,data:null}
-    const msg = error.response?.data?.message ?? 'Có lỗi xảy ra';
-    return Promise.reject(new Error(msg));
-  }
+    return Promise.reject(toApiError(error));
+  },
 );
-
-// Helper unwrap data
-export async function unwrap<T>(p: Promise<{ data: ApiResponse<T> }>): Promise<T> {
-  const res = await p;
-  return res.data.data;
-}
 ```
 
 Ví dụ API function (`features/requests/api.ts`):
 
 ```typescript
 import { apiClient, unwrap } from '../../lib/apiClient';
-import type { AssignRequest, PageResult, RequestCreateRequest, RequestResponse } from '../../types/api';
+import type { ApiResponse, PageResponse, RequestResponse } from '../../types/api';
 
 export interface RequestFilter {
-  page?: number; size?: number; sort?: string;
+  page: number; size: number; sort: string;
   status?: string; category?: string; priority?: string; keyword?: string;
 }
 
-export const fetchRequests = (f: RequestFilter) =>
-  unwrap<PageResult<RequestResponse>>(apiClient.get('/requests', { params: f }));
-
-export const fetchRequest = (id: number) =>
-  unwrap<RequestResponse>(apiClient.get(`/requests/${id}`));
-
-export const createRequest = (body: RequestCreateRequest) =>
-  unwrap<RequestResponse>(apiClient.post('/requests', body));
-
-export const assignRequest = (id: number, body: AssignRequest) =>
-  unwrap<RequestResponse>(apiClient.patch(`/requests/${id}/assign`, body));
-
-export const updateStatus = (id: number, body: { status: string; memo?: string; expectedVersion: number }) =>
-  unwrap<RequestResponse>(apiClient.patch(`/requests/${id}/status`, body));
+export function fetchRequests(filter: RequestFilter, signal?: AbortSignal) {
+  if (env.isRequestDemoMode) return fetchDemoRequests(filter, signal);
+  return unwrap(apiClient.get<ApiResponse<PageResponse<RequestResponse>>>('/requests', {
+    params: filter, signal,
+  }));
+}
 ```
 
 ## 7. Xác thực & phân quyền (JWT)
 
-**Lưu token:** `localStorage` (`accessToken`, `refreshToken`, `role`). Đủ cho demo OJT (nói rõ trade-off: production nên dùng httpOnly cookie chống XSS). Khi access token nhận 401, interceptor chỉ gọi một lần `POST /auth/refresh`, atomically thay cả hai token rồi retry request; refresh fail thì xóa state và về login. Không tự retry `/auth/refresh` để tránh loop.
+**Lưu token:** một object session duy nhất dưới key `bzcom.crm.session` trong `localStorage`,
+đọc/validate qua `auth/session.ts`; feature không truy cập raw key. Cách này đủ cho demo OJT
+(production nên dùng httpOnly cookie để giảm rủi ro XSS). Khi access token nhận 401,
+interceptor chỉ gọi một lần `POST /auth/refresh` cho mọi request đang chờ, thay nguyên tử cả
+cặp token rồi retry đúng một lần. Refresh fail thì xóa session và AuthContext đưa người dùng
+về login. Auth endpoints dùng `publicApiClient`, không gửi Bearer access token cũ.
 
 `AuthContext` giữ `{ isAuthenticated, role, login(), logout() }`:
 
 ```typescript
-// auth/AuthContext.tsx (rút gọn)
-const login = async (email: string, password: string) => {
-  const data = await unwrap<TokenResponse>(apiClient.post('/auth/login', { email, password }));
-  localStorage.setItem('accessToken', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
-  localStorage.setItem('role', data.role);
-  setRole(data.role);
+const login = async (request: LoginRequest) => {
+  const tokens = await loginRequest(request); // publicApiClient
+  setSession(sessionStore.write(tokens));
 };
 const logout = async () => {
-  await authClient.post('/auth/logout', { refreshToken: localStorage.getItem('refreshToken') }).catch(() => {});
-  localStorage.clear(); setRole(null);
+  const current = sessionStore.read();
+  try { if (current) await logoutRequest(current.refreshToken); }
+  catch { /* vẫn đăng xuất local nếu mạng/backend lỗi */ }
+  finally { sessionStore.clear(); setSession(null); }
 };
 ```
 
-**Protected route theo role:**
+**Guard đăng nhập và role:**
 
 ```typescript
-// auth/ProtectedRoute.tsx
-export function ProtectedRoute({ allow }: { allow?: Role[] }) {
-  const { isAuthenticated, role } = useAuth();
+// auth/RouteGuards.tsx
+export function ProtectedRoute() {
+  const { isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (allow && role && !allow.includes(role)) return <Navigate to="/403" replace />;
   return <Outlet />;
+}
+export function RoleRoute({ allow }: { allow: Role[] }) {
+  const { role } = useAuth();
+  return role && allow.includes(role) ? <Outlet /> : <Navigate to="/403" replace />;
 }
 ```
 
@@ -312,7 +290,7 @@ export function ProtectedRoute({ allow }: { allow?: Role[] }) {
 **Query key** đặt theo tài nguyên + tham số → tự cache & refetch đúng:
 
 ```typescript
-// features/requests/api.ts (hooks)
+// features/requests/queries.ts
 export const useRequests = (filter: RequestFilter) =>
   useQuery({ queryKey: ['requests', filter], queryFn: () => fetchRequests(filter) });
 
@@ -337,28 +315,33 @@ export const useUpdateStatus = (id: number) => {
 
 ## 9. Routing & bản đồ trang
 
+Đây là bản đồ route đã triển khai của frontend. Toàn bộ Auth, Member, Request workflow,
+AI, Alert và Statistics đã nối API thật theo contract; demo adapter chỉ còn là chế độ phát
+triển UI cô lập được bật tường minh.
+
 ```typescript
 // App.tsx
 <Routes>
-  <Route path="/login" element={<LoginPage />} />
-  <Route path="/register" element={<RegisterPage />} />
+  <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+  <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
   <Route element={<ProtectedRoute />}>
     <Route element={<AppLayout />}>
       <Route index element={<Navigate to="/requests" />} />
-      <Route path="/requests" element={<RequestListPage />} />
-      <Route path="/requests/new" element={<ProtectedRoute allow={['CLIENT']} />}>
-        <Route index element={<RequestCreatePage />} />
+            <Route path="/requests" element={<RequestListPage />} />
+            <Route path="/requests/:id" element={<RequestDetailPage />} />
+            <Route path="/alerts" element={<AlertListPage />} />
+      <Route element={<RoleRoute allow={['CLIENT']} />}>
+        <Route path="/requests/new" element={<RequestCreatePage />} />
       </Route>
-      <Route path="/requests/:id" element={<RequestDetailPage />} />
-      <Route path="/alerts" element={<AlertListPage />} />
-      <Route element={<ProtectedRoute allow={['ADMIN']} />}>
+      <Route element={<RoleRoute allow={['ADMIN']} />}>
+        <Route path="/stats" element={<StatsDashboardPage />} />
         <Route path="/members" element={<MemberListPage />} />
         <Route path="/members/:id" element={<MemberDetailPage />} />
-        <Route path="/stats" element={<StatsDashboardPage />} />
       </Route>
+      <Route path="/403" element={<ForbiddenPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Route>
   </Route>
-  <Route path="/403" element={<ForbiddenPage />} />
 </Routes>
 ```
 
@@ -370,6 +353,11 @@ export const useUpdateStatus = (id: number) => {
 | Members | ✅ | | |
 | Thống kê | ✅ | | |
 | Alerts (chuông) | ✅ | ✅ | ✅ |
+
+Header có global search desktop. Submit điều hướng tới
+`/requests?keyword=<encoded-value>` để dùng lại filter server-side canonical; không tạo một
+cơ chế tìm kiếm client-side thứ hai. AI action nằm đúng ngữ cảnh ở Request Create/Detail,
+không có nút assistant placeholder riêng.
 
 ## 10. Đặc tả từng trang
 
@@ -392,17 +380,28 @@ Form email + password → `login()`. Thành công → điều hướng `/request
 ### RequestCreatePage (CLIENT)
 - Form: title, description, category, priority (validation khớp backend: title bắt buộc...).
 - Nút **"AI gợi ý"**: gọi `POST /classify` + `/suggest-priority` với description → tự điền category/priority (kèm hiển thị confidence + reason) → **người dùng xác nhận** trước khi submit (đúng nguyên tắc "LLM chỉ gợi ý", [BR-13](./ANALYZE.md#7-business-rules-br)). Mọi lệnh assign/status gửi `expectedVersion` từ `RequestResponse.version`; 409 thì refetch detail và yêu cầu người dùng xác nhận lại.
+- Route `/requests/new` chỉ cho CLIENT; demo adapter là read-only nên form hiện cảnh báo và
+  khóa mutation khi `VITE_REQUEST_DATA_MODE=demo` để không tạo dữ liệu backend bị ẩn khỏi
+  danh sách demo.
 
 ### StatsDashboardPage (ADMIN)
 - Card số: total, completed, completionRate (%).
 - Pie chart theo category; Bar chart theo developer (assignedCount vs doneCount).
 - Đây là màn "wow" cho slide demo.
+- Implementation dùng donut `conic-gradient` và horizontal bar thuần CSS với phép tính đã
+  unit test, thay vì thêm chart dependency nặng cho hai biểu đồ đơn giản. Biểu đồ có legend,
+  giá trị số, empty state và `aria-label`; route `/stats` nằm trong ADMIN `RoleRoute`.
 
 ### MemberListPage / MemberDetailPage (ADMIN)
 - Table member; RegisterPage công khai để tạo member (test đủ role cho demo).
 
 ### AlertBell / AlertListPage
-- `AlertBell` ở header: `Badge` đếm alert `isRead=false` (poll `GET /alerts?isRead=false` mỗi ~15s hoặc refetch sau mutation). Popover liệt kê alert; click → đánh dấu đọc (`PATCH /{id}/read`) + điều hướng tới request liên quan.
+- `AlertBell` ở header: poll `GET /alerts` mỗi ~15s, đếm item `isRead=false` cho `Badge`
+  và dùng cùng response cho popover để tránh hai request polling trùng nhau. Click → đánh dấu
+  đọc (`PATCH /{id}/read`) + điều hướng tới request liên quan.
+- Implementation dùng một query list được poll 15 giây cho badge và 5 item mới nhất trong
+  popover; trang `/alerts` có filter all/unread/read. Mark-read invalidate prefix
+  `['alerts']`, nên badge, popover và list đồng bộ ngay.
 
 ## 11. Xử lý lỗi & thông báo
 
@@ -416,39 +415,61 @@ Form email + password → `login()`. Thành công → điều hướng `/request
 `.env.example`:
 ```
 VITE_API_BASE_URL=http://localhost:8080/api
+VITE_REQUEST_DATA_MODE=api
 ```
 
 Chạy dev:
 ```bash
-cd frontend
-npm install
-npm run dev            # http://localhost:5173, proxy tới backend :8080
+cd FE
+npm ci
+npm run dev            # http://localhost:5173; gọi trực tiếp backend :8080 qua CORS
 ```
 
-**CORS:** backend cần cho phép origin `http://localhost:5173` (dev) — thêm `CorsConfig` ở Spring (allow `localhost:5173`, methods GET/POST/PATCH/DELETE, header Authorization). Ghi chú này gửi cho member A (config).
+Quality gate local/CI:
 
-**Dockerfile (multi-stage → nginx):**
+```bash
+npm run verify         # lint + typecheck + unit/component test + production build
+```
+
+**CORS:** backend hiện đã cho phép origin `http://localhost:5173` (dev), các method
+GET/POST/PATCH/DELETE và header `Authorization` trong `SecurityConfig`.
+
+**Dockerfile (multi-stage → Nginx):** build-time dùng `VITE_API_BASE_URL=/api`; Nginx phục
+vụ SPA và reverse proxy `/api` tới service `backend`, nên bản Docker dùng same-origin và
+không phụ thuộc CORS của browser.
+
 ```dockerfile
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ARG VITE_API_BASE_URL=/api
+ARG VITE_REQUEST_DATA_MODE=api
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_REQUEST_DATA_MODE=${VITE_REQUEST_DATA_MODE}
 RUN npm run build
-FROM nginx:alpine
+FROM nginx:1.27-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 ```
-`nginx.conf`: SPA fallback (`try_files $uri /index.html`) + (tuỳ chọn) proxy `/api` sang service backend.
+`nginx.conf`: SPA fallback (`try_files $uri $uri/ /index.html`), cache immutable cho asset
+đã hash và `location /api/ { proxy_pass http://backend:8080; }`.
 
-**Thêm vào docker-compose** (mở rộng compose ở [ARCHITECTURE.md §10](./ARCHITECTURE.md#10-kiến-trúc-triển-khai-docker)):
+**Root `compose.yaml`** (xem [ARCHITECTURE.md §10](./ARCHITECTURE.md#10-kiến-trúc-triển-khai-docker)):
 ```yaml
   frontend:
-    build: ./frontend
+    build:
+      context: ./FE
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_REQUEST_DATA_MODE: ${VITE_REQUEST_DATA_MODE:-api}
     ports: ["5173:80"]
-    depends_on: [app]
+    depends_on:
+      backend:
+        condition: service_healthy
 ```
-→ `docker compose up --build` chạy cả 3: frontend + app + db. Demo một lệnh.
+→ `docker compose up --build` chạy cả 3: frontend + app + db và FE gọi API thật theo mặc định.
 
 ## 13. Phân công & thứ tự làm
 
@@ -456,8 +477,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 | Thứ tự | Việc | Phụ thuộc |
 |---|---|---|
-| 1 | Setup Vite + TS + antd + router + React Query + apiClient + AuthContext | — (làm được sớm, dùng mock/JSON) |
-| 2 | Login + ProtectedRoute + AppLayout (menu theo role) | #1 + `/auth/login` backend |
+| 1 | Setup Vite + TS + antd + router + React Query + apiClient + AuthContext | — (làm được sớm; Request dùng demo mode có nhãn) |
+| 2 | Login + ProtectedRoute/RoleRoute + AppLayout (menu theo role) | #1 + `/auth/login` backend |
 | 3 | RequestListPage (Table + filter + paging) | `/requests` backend |
 | 4 | RequestDetailPage (history + assign + status) | `/requests/{id}`, `/assign`, `/status`, `/history` |
 | 5 | RequestCreatePage + nút AI gợi ý | `/requests`, `/classify` |
@@ -468,6 +489,27 @@ COPY --from=build /app/dist /usr/share/nginx/html
 **Gợi ý người làm:** vì backend đã chia A/B/C/D, FE có thể do **1–2 người phụ trách sau khi phần backend của họ xong** (thường A hoặc D rảnh sớm), hoặc mỗi người làm trang FE ứng với feature backend mình đã làm (dễ vì hiểu rõ API đó nhất). Ghi rõ đóng góp FE ở slide 11.
 
 **Rủi ro cần nhớ:** nếu quỹ thời gian eo hẹp → cắt theo thứ tự ngược (#8 → #7 → ...), giữ tối thiểu #1–#5 để demo trọn luồng chính. **Tuyệt đối không hi sinh chất lượng backend để làm FE** — backend mới là thứ được chấm.
+
+### 13.1 Branch triển khai và bằng chứng Git Flow
+
+Các lát cắt UI lớn được phát triển tuần tự từ `develop`, merge bằng PR và **giữ branch trên
+remote sau merge** để có thể trình bày network graph/lịch sử phát triển với doanh nghiệp:
+
+| Thứ tự | Branch | Task/phạm vi | Quality gate trước PR |
+|---|---|---|---|
+| 1 | `feature/request-workflow-ui` | T-5.3/T-5.4: list acceptance, assign, status, history, AI summary | FE verify + workflow smoke |
+| 2 | `feature/request-create-ai-ui` | T-5.5: form CLIENT + classify/priority suggestion | FE verify + create smoke |
+| 3 | `feature/alerts-ui` | T-5.6: badge, polling, popover/list, mark-read/deep-link | FE verify + alert smoke |
+| 4 | `feature/stats-dashboard-ui` | T-5.7: KPI/charts ADMIN | FE verify + stats smoke |
+| 5 | `test/frontend-acceptance` | role/edge case/a11y/responsive, docs/task sync | FE verify + Docker full-stack smoke |
+
+Không tái sử dụng branch đã merge cho lát cắt mới. Nếu repository bật tự động xóa head
+branch sau merge, leader tạo lại branch cùng tên tại merge commit hoặc tắt tùy chọn đó trước
+khi merge các PR UI.
+
+**Dependency security status (10/08/2026):** `npm audit --audit-level=moderate` báo
+`found 0 vulnerabilities`. Tiếp tục dùng lockfile + `npm ci`; không chạy
+`npm audit fix --force` hoặc đổi major version ngoài PR có kiểm thử.
 
 ---
 
