@@ -13,6 +13,7 @@ const RequestListPage = lazy(() => import('../features/requests/RequestListPage'
 const RequestDetailPage = lazy(() => import('../features/requests/RequestDetailPage').then((module) => ({ default: module.RequestDetailPage })));
 const RequestCreatePage = lazy(() => import('../features/requests/RequestCreatePage').then((module) => ({ default: module.RequestCreatePage })));
 const AlertListPage = lazy(() => import('../features/alerts/AlertListPage').then((module) => ({ default: module.AlertListPage })));
+const StatsDashboardPage = lazy(() => import('../features/stats/StatsDashboardPage').then((module) => ({ default: module.StatsDashboardPage })));
 
 export function App() {
   return (
@@ -30,6 +31,7 @@ export function App() {
               <Route path="/requests/new" element={<RequestCreatePage />} />
             </Route>
             <Route element={<RoleRoute allow={['ADMIN']} />}>
+              <Route path="/stats" element={<StatsDashboardPage />} />
               <Route path="/members" element={<MemberListPage />} />
               <Route path="/members/:id" element={<MemberDetailPage />} />
             </Route>

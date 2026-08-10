@@ -117,3 +117,18 @@ export interface AlertResponse {
   isRead: boolean;
   createdAt: string;
 }
+
+export interface DeveloperStats {
+  developerId: number;
+  developerName: string;
+  assignedCount: number;
+  doneCount: number;
+}
+
+export interface StatsResponse {
+  total: number;
+  completed: number;
+  completionRate: number;
+  byCategory: Partial<Record<Category, number>>;
+  byDeveloper: DeveloperStats[];
+}

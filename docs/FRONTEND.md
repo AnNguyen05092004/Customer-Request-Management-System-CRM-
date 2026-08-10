@@ -48,7 +48,7 @@ Phủ toàn bộ endpoint trong [openapi.yaml](./openapi.yaml). UI hiển thị 
 | HTTP | **axios** | Interceptor gắn JWT + xử lý 401 tập trung |
 | Routing | **React Router v7** | Declarative nested route + protected route theo role |
 | UI kit | **Ant Design v5** | Sẵn Table (paging/sort/filter), Form (validation), Tag, Badge, message — hợp CRM, lên UI rất nhanh |
-| Biểu đồ | **Ant Design Charts** (hoặc Recharts) | Vẽ dashboard stats |
+| Biểu đồ | **CSS conic-gradient + semantic bars** | Đủ cho 2 biểu đồ MVP, không tăng dependency/bundle; phép tính có unit test và nhãn accessibility |
 | Form | **Ant Design Form** + rule | Validation client khớp validation backend |
 
 > **Vì sao Ant Design (không Tailwind/shadcn)?** CRM = nhiều bảng + form + filter. Ant Design cho sẵn `Table` với phân trang/sắp xếp/lọc server-side, `Form` với validation → **tiết kiệm hàng giờ** so với tự ghép component. Đây là lựa chọn tối ưu thời gian cho bài OJT.
@@ -334,6 +334,7 @@ bám contract đã được xác nhận.
         <Route path="/requests/new" element={<RequestCreatePage />} />
       </Route>
       <Route element={<RoleRoute allow={['ADMIN']} />}>
+        <Route path="/stats" element={<StatsDashboardPage />} />
         <Route path="/members" element={<MemberListPage />} />
         <Route path="/members/:id" element={<MemberDetailPage />} />
       </Route>
@@ -382,6 +383,9 @@ Form email + password → `login()`. Thành công → điều hướng `/request
 - Card số: total, completed, completionRate (%).
 - Pie chart theo category; Bar chart theo developer (assignedCount vs doneCount).
 - Đây là màn "wow" cho slide demo.
+- Implementation dùng donut `conic-gradient` và horizontal bar thuần CSS với phép tính đã
+  unit test, thay vì thêm chart dependency nặng cho hai biểu đồ đơn giản. Biểu đồ có legend,
+  giá trị số, empty state và `aria-label`; route `/stats` nằm trong ADMIN `RoleRoute`.
 
 ### MemberListPage / MemberDetailPage (ADMIN)
 - Table member; RegisterPage công khai để tạo member (test đủ role cho demo).
