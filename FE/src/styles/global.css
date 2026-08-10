@@ -428,6 +428,97 @@ input:focus-visible {
   margin-bottom: 0;
 }
 
+.alert-popover {
+  width: min(400px, calc(100vw - 32px));
+}
+
+.alert-popover__header,
+.alert-popover__header > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.alert-popover__header > div {
+  flex-direction: column;
+}
+
+.alert-popover .ant-divider {
+  margin: 12px 0 4px;
+}
+
+.alert-popover__loading {
+  padding: 32px;
+  text-align: center;
+}
+
+.alert-popover .ant-list {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.alert-item {
+  padding: 0 !important;
+}
+
+.alert-item__button {
+  display: grid;
+  grid-template-columns: 8px 1fr 16px;
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 8px;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.alert-item__button:hover,
+.alert-item__button:focus-visible {
+  background: #f3f6fb;
+}
+
+.alert-item__button .ant-typography {
+  display: block;
+}
+
+.alert-item__dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 7px;
+  background: transparent;
+  border-radius: 50%;
+}
+
+.alert-item--unread .alert-item__dot {
+  background: var(--bz-primary-bright);
+}
+
+.alert-list-card .ant-card-body {
+  padding-block: 4px;
+}
+
+.notification-row {
+  padding: 18px 8px !important;
+}
+
+.notification-row--unread {
+  background: linear-gradient(90deg, #f0f5ff, transparent 75%);
+}
+
+.notification-row__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--bz-primary-bright);
+  background: #e9f0ff;
+  border-radius: 50%;
+}
+
 .auth-page {
   display: grid;
   place-items: center;

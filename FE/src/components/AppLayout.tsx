@@ -1,5 +1,4 @@
 import {
-  Bell,
   Bot,
   ChevronDown,
   LogOut,
@@ -14,6 +13,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { roleLabels } from '../utils/format';
+import { AlertBell } from '../features/alerts/AlertBell';
 
 const { Header, Sider, Content } = Layout;
 
@@ -131,7 +131,7 @@ export function AppLayout() {
           </Space>
           <Space size="small">
             <Button type="text" aria-label="AI assistant (coming soon)" icon={<Bot />} disabled />
-            <Button type="text" aria-label="Alerts (coming soon)" icon={<Bell />} disabled />
+            <AlertBell />
             <div className="user-menu-container" ref={userMenuRef}>
               <Button
                 type="text"

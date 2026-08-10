@@ -108,3 +108,12 @@ export interface PriorityResult {
   confidence: number;
   reason: string;
 }
+
+export interface AlertResponse {
+  id: number;
+  requestId: number;
+  alertType: AlertType;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
