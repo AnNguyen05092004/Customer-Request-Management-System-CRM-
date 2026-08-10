@@ -6,7 +6,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -25,6 +34,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @ActiveProfiles("test")
 class FoundationIT {
 
+    private static final Set<String> HTTP_METHODS = Set.of("get", "post", "put", "patch", "delete");
+
     @Container
     @ServiceConnection
     static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:16-alpine");
@@ -34,6 +45,9 @@ class FoundationIT {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     void flywayCreatesTheFiveContractTables() {
@@ -65,11 +79,58 @@ class FoundationIT {
     }
 
     @Test
+    void runtimeOpenApiOperationsAndStatusesMatchCanonicalContract() throws Exception {
+        String runtimeJson = mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode runtime = objectMapper.readTree(runtimeJson);
+        Path canonicalPath = resolveCanonicalOpenApiPath();
+        JsonNode canonical = new ObjectMapper(new YAMLFactory()).readTree(Files.readString(canonicalPath));
+
+        assertThat(extractOperationsAndStatuses(runtime))
+                .as("runtime /v3/api-docs must match %s", canonicalPath)
+                .isEqualTo(extractOperationsAndStatuses(canonical));
+    }
+
+    @Test
     void businessEndpointsDenyAnonymousRequestsWithCanonicalEnvelope() throws Exception {
         mockMvc.perform(get("/api/requests"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.message").value("Unauthorized"))
                 .andExpect(jsonPath("$.data").value(nullValue()));
+    }
+
+    private static Path resolveCanonicalOpenApiPath() {
+        List<Path> candidates = List.of(Path.of("..", "docs", "openapi.yaml"), Path.of("docs", "openapi.yaml"));
+        return candidates.stream()
+                .map(Path::toAbsolutePath)
+                .map(Path::normalize)
+                .filter(Files::isRegularFile)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Cannot locate canonical docs/openapi.yaml"));
+    }
+
+    private static Map<String, Set<String>> extractOperationsAndStatuses(JsonNode openApi) {
+        Map<String, Set<String>> operations = new TreeMap<>();
+        openApi.path("paths")
+                .properties()
+                .forEach(pathEntry -> pathEntry.getValue().properties().forEach(methodEntry -> {
+                    String method = methodEntry.getKey().toLowerCase();
+                    if (!HTTP_METHODS.contains(method)) {
+                        return;
+                    }
+                    Set<String> statuses = new TreeSet<>();
+                    methodEntry
+                            .getValue()
+                            .path("responses")
+                            .propertyStream()
+                            .forEach(response -> statuses.add(response.getKey()));
+                    operations.put(method.toUpperCase() + " " + pathEntry.getKey(), statuses);
+                }));
+        return operations;
     }
 }

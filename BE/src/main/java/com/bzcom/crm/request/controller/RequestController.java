@@ -12,6 +12,9 @@ import com.bzcom.crm.request.dto.response.StatsResponse;
 import com.bzcom.crm.request.service.RequestService;
 import com.bzcom.crm.request.service.RequestStatsService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +48,24 @@ public class RequestController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('CLIENT')")
     @Operation(summary = "Tạo yêu cầu (CLIENT only)")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "201",
+                description = "Tạo request thành công",
+                useReturnTypeSchema = true),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "Dữ liệu không hợp lệ",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "Chưa đăng nhập",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "Chỉ CLIENT được tạo request",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
     public ResponseEntity<ApiResponse<RequestResponse>> create(
             @Valid @RequestBody RequestCreateRequest request, @AuthenticationPrincipal CurrentUser currentUser) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -53,6 +74,20 @@ public class RequestController {
 
     @GetMapping
     @Operation(summary = "Danh sách request (phân trang / sort / filter tổ hợp; phạm vi theo role)")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "Trang kết quả",
+                useReturnTypeSchema = true),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "400",
+                description = "Paging, sort hoặc filter không hợp lệ",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "Chưa đăng nhập",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
     public ApiResponse<PageResponse<RequestResponse>> getRequests(
             @PageableDefault(page = 0, size = 10) Pageable pageable,
             @RequestParam(required = false) RequestStatus status,
@@ -65,6 +100,24 @@ public class RequestController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Chi tiết một request (kiểm quyền xem theo role)")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "Chi tiết request",
+                useReturnTypeSchema = true),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "Chưa đăng nhập",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "Không có quyền xem request",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "404",
+                description = "Không tìm thấy request",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
     public ApiResponse<RequestResponse> getDetail(
             @PathVariable Long id, @AuthenticationPrincipal CurrentUser currentUser) {
         return ApiResponse.ok(requestService.getRequestDetail(id, currentUser));
@@ -73,6 +126,20 @@ public class RequestController {
     @GetMapping("/stats")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Thống kê (ADMIN only) — tổng, completion rate, theo category, theo developer")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "200",
+                description = "Dữ liệu thống kê",
+                useReturnTypeSchema = true),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "401",
+                description = "Chưa đăng nhập",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                responseCode = "403",
+                description = "Chỉ ADMIN được xem thống kê",
+                content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+    })
     public ApiResponse<StatsResponse> getStats() {
         return ApiResponse.ok(requestStatsService.getStats());
     }
