@@ -1,6 +1,7 @@
 import {
   Bot,
   ChevronDown,
+  ChartNoAxesCombined,
   LogOut,
   Menu as MenuIcon,
   Search,
@@ -62,13 +63,16 @@ export function AppLayout() {
       { key: '/requests', icon: <TicketCheck size={18} />, label: 'Requests' },
       ...(role === 'CLIENT' ? [{ key: '/requests/new', icon: <SquarePlus size={18} />, label: 'Create request' }] : []),
       ...(role === 'ADMIN' ? [{ key: '/members', icon: <Users size={18} />, label: 'Members' }] : []),
+      ...(role === 'ADMIN' ? [{ key: '/stats', icon: <ChartNoAxesCombined size={18} />, label: 'Dashboard' }] : []),
     ],
     [role],
   );
 
   const selectedKey = location.pathname === '/requests/new'
     ? '/requests/new'
-    : location.pathname.startsWith('/members') ? '/members' : '/requests';
+    : location.pathname.startsWith('/members')
+      ? '/members'
+      : location.pathname.startsWith('/stats') ? '/stats' : '/requests';
   const navigation = (
     <Menu
       mode="inline"

@@ -364,11 +364,15 @@
   mọi alert query rồi deep-link request. Contract test kiểm query/path; full-stack smoke đã
   chạy tạo HIGH request → ADMIN nhận unread → mark-read → biến mất khỏi unread list.
 
-### [ ] T-5.7 — StatsDashboardPage (charts)
+### [x] T-5.7 — StatsDashboardPage (charts)
 - Owner: FE   Depends on: T-5.2, T-3.3   Ước lượng: 30′
 - Refs: [FRONTEND.md §10](./FRONTEND.md#10-đặc-tả-từng-trang)
 - Việc: card total/completed/completionRate + pie theo category + bar theo developer. Chỉ ADMIN.
 - DoD: số & biểu đồ khớp `/stats`; non-ADMIN không vào được route.
+- Bằng chứng FE: `/stats` nằm trong ADMIN `RoleRoute`; KPI hiển thị total/completed/rate/
+  active, donut theo category và bar assigned/done theo developer có empty state + nhãn
+  accessibility. API/chart unit test xanh; full-stack smoke trong Docker xác nhận ADMIN
+  nhận aggregate hợp lệ và CLIENT nhận 403.
 
 ### [x] T-5.8 — Member pages + Register
 - Owner: FE   Depends on: T-5.2, T-1.8   Ước lượng: 25′
