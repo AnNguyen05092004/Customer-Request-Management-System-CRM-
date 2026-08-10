@@ -5,6 +5,7 @@ import {
   LogOut,
   Menu as MenuIcon,
   Search,
+  SquarePlus,
   TicketCheck,
   Users,
 } from 'lucide-react';
@@ -59,12 +60,15 @@ export function AppLayout() {
   const menuItems = useMemo(
     () => [
       { key: '/requests', icon: <TicketCheck size={18} />, label: 'Requests' },
+      ...(role === 'CLIENT' ? [{ key: '/requests/new', icon: <SquarePlus size={18} />, label: 'Create request' }] : []),
       ...(role === 'ADMIN' ? [{ key: '/members', icon: <Users size={18} />, label: 'Members' }] : []),
     ],
     [role],
   );
 
-  const selectedKey = location.pathname.startsWith('/members') ? '/members' : '/requests';
+  const selectedKey = location.pathname === '/requests/new'
+    ? '/requests/new'
+    : location.pathname.startsWith('/members') ? '/members' : '/requests';
   const navigation = (
     <Menu
       mode="inline"

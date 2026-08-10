@@ -5,9 +5,13 @@ import type {
   ApiResponse,
   AssignRequest,
   Category,
+  ClassifyResult,
+  DescriptionRequest,
   HistoryResponse,
   PageResponse,
   Priority,
+  PriorityResult,
+  RequestCreateRequest,
   RequestResponse,
   RequestStatus,
   Role,
@@ -127,4 +131,16 @@ export function updateRequestStatus(id: number, request: StatusUpdateRequest): P
 
 export function fetchRequestSummary(id: number): Promise<SummaryResponse> {
   return unwrap(apiClient.get<ApiResponse<SummaryResponse>>(`/requests/${id}/summary`));
+}
+
+export function createRequest(request: RequestCreateRequest): Promise<RequestResponse> {
+  return unwrap(apiClient.post<ApiResponse<RequestResponse>>('/requests', request));
+}
+
+export function classifyRequest(request: DescriptionRequest): Promise<ClassifyResult> {
+  return unwrap(apiClient.post<ApiResponse<ClassifyResult>>('/requests/classify', request));
+}
+
+export function suggestRequestPriority(request: DescriptionRequest): Promise<PriorityResult> {
+  return unwrap(apiClient.post<ApiResponse<PriorityResult>>('/requests/suggest-priority', request));
 }

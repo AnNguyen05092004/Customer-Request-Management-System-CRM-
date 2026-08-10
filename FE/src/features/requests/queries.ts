@@ -1,13 +1,16 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '../../lib/apiError';
-import type { AssignRequest, Role, StatusUpdateRequest } from '../../types/api';
+import type { AssignRequest, DescriptionRequest, RequestCreateRequest, Role, StatusUpdateRequest } from '../../types/api';
 import type { RequestFilter } from './api';
 import {
   assignRequest,
+  classifyRequest,
+  createRequest,
   fetchRequest,
   fetchRequestHistory,
   fetchRequests,
   fetchRequestSummary,
+  suggestRequestPriority,
   updateRequestStatus,
 } from './api';
 
@@ -78,4 +81,29 @@ export function useUpdateRequestStatus(id: number) {
 
 export function useRequestSummary(id: number) {
   return useMutation({ mutationFn: () => fetchRequestSummary(id) });
+}
+
+export function useCreateRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (request: RequestCreateRequest) => createRequest(request),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: requestKeys.all }),
+        queryClient.invalidateQueries({ queryKey: ['alerts'] }),
+      ]);
+    },
+  });
+}
+
+export function useRequestSuggestions() {
+  return useMutation({
+    mutationFn: async (request: DescriptionRequest) => {
+      const [classification, priority] = await Promise.all([
+        classifyRequest(request),
+        suggestRequestPriority(request),
+      ]);
+      return { classification, priority };
+    },
+  });
 }
