@@ -333,13 +333,16 @@
   demo adapter đã xong; Request backend đã merge và API mode là mặc định. Giữ task mở đến
   khi kiểm chứng acceptance phạm vi đủ 3 role trên FE/API thật.
 
-### [ ] T-5.4 — RequestDetailPage (history timeline + assign + status + AI summary)
+### [x] T-5.4 — RequestDetailPage (history timeline + assign + status + AI summary)
 - Owner: FE   Depends on: T-5.3, T-2.C3, T-2.C4, T-2.C2   Ước lượng: 45′
 - Refs: [FRONTEND.md §10](./FRONTEND.md#10-đặc-tả-từng-trang)
 - Việc: chi tiết + `Timeline` history. ADMIN: Modal gán (auto switch / chọn dev). ADMIN/DEV: nút đổi status **chỉ hiện transition hợp lệ**; 409 → message. Nút "AI tóm tắt".
 - DoD: gán & đổi status hoạt động, invalidate query → UI cập nhật + chuông cập nhật; nút status sai luật không hiện; 409 hiển thị message.
-- Trạng thái FE: detail và history đã gọi API thật; workflow/assignment/AI backend cũng đã
-  merge. Task còn mở vì FE mutations và nút AI summary chưa được nối.
+- Bằng chứng FE: detail/history gọi API thật; ADMIN gán tự động/thủ công từ danh sách
+  DEVELOPER; ADMIN/DEVELOPER chỉ thấy transition kế tiếp hợp lệ; mọi mutation gửi
+  `expectedVersion`, invalidate request/history/alert và hiện lỗi 409/422 từ backend; AI
+  summary đã nối. Contract test kiểm đúng path/body và full-stack smoke qua Nginx proxy đã
+  chạy create → auto-assign → IN_PROGRESS → history thành công.
 
 ### [ ] T-5.5 — RequestCreatePage + nút AI gợi ý
 - Owner: FE   Depends on: T-5.2, T-2.B2, T-3.2   Ước lượng: 30′

@@ -88,3 +88,7 @@ export interface HistoryResponse {
   memo: string | null;
   changedAt: string;
 }
+
+export interface SummaryResponse {
+  summary: string;
+}

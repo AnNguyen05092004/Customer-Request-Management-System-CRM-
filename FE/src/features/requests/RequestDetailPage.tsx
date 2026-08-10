@@ -1,5 +1,5 @@
-import { ArrowLeft, Bot, CalendarDays, Clock3, UserRound, UsersRound } from 'lucide-react';
-import { Button, Card, Col, Descriptions, Divider, Grid, Row, Space, Tag, Timeline, Tooltip, Typography } from 'antd';
+import { ArrowLeft, CalendarDays, Clock3, UserRound, UsersRound } from 'lucide-react';
+import { Button, Card, Col, Descriptions, Divider, Grid, Row, Space, Tag, Timeline, Typography } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/useAuth';
 import { PageHeader } from '../../components/PageHeader';
@@ -8,6 +8,7 @@ import { CategoryTag, PriorityLabel, StatusTag } from '../../components/Resource
 import { env } from '../../config/env';
 import { formatDateTime, formatRequestId, statusLabels } from '../../utils/format';
 import { useRequest, useRequestHistory } from './queries';
+import { RequestWorkflowControls } from './RequestWorkflowControls';
 
 export function RequestDetailPage() {
   const { id: rawId } = useParams();
@@ -24,8 +25,6 @@ export function RequestDetailPage() {
   if (request.error || !request.data) return <ResourceError error={request.error} resource="request" />;
 
   const item = request.data;
-  const canManageWorkflow = role === 'ADMIN' || role === 'DEVELOPER';
-
   return (
     <div className="page-stack request-detail-page">
       <PageHeader
@@ -105,31 +104,12 @@ export function RequestDetailPage() {
                 <StatusTag status={item.status} />
               </div>
               <Divider />
-              {canManageWorkflow ? (
-                <Tooltip title="Status mutation will be connected by the Workflow feature owner.">
-                  <Button block disabled>Update status</Button>
-                </Tooltip>
-              ) : (
-                <Typography.Text type="secondary">Your role has read-only workflow access.</Typography.Text>
-              )}
-            </Card>
-
-            {role === 'ADMIN' ? (
-              <Card className="detail-card" title={<Space>Assignment <Tag>ADMIN ONLY</Tag></Space>}>
-                <Typography.Paragraph>
-                  {item.assignedDeveloperId ? `Currently assigned to developer #${item.assignedDeveloperId}.` : 'This request is unassigned.'}
-                </Typography.Paragraph>
-                <Tooltip title="Assignment mutation will be connected by the Workflow feature owner.">
-                  <Button block disabled>Assign developer</Button>
-                </Tooltip>
-              </Card>
-            ) : null}
-
-            <Card className="detail-card ai-placeholder" title={<Space><Bot size={18} />Bzcom AI insights</Space>}>
               <Typography.Paragraph type="secondary">
-                The backend summary API is available; this action will be enabled when the frontend control is connected.
+                {item.assignedDeveloperId
+                  ? `Assigned to developer #${item.assignedDeveloperId}. Changes use optimistic version ${item.version}.`
+                  : `Unassigned. Assign a developer before moving this request to ${statusLabels.IN_PROGRESS}.`}
               </Typography.Paragraph>
-              <Button icon={<Bot size={16} />} block disabled>Generate summary</Button>
+              <RequestWorkflowControls request={item} role={role} />
             </Card>
 
             <Card size="small">

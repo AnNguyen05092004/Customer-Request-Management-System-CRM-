@@ -315,8 +315,8 @@ export const useUpdateStatus = (id: number) => {
 
 ## 9. Routing & bản đồ trang
 
-Đây là bản đồ route **đã triển khai trong foundation hiện tại**. Request read APIs đã được nối;
-các UI create request, workflow mutation, alerts và statistics vẫn là phần FE tiếp theo và phải
+Đây là bản đồ route của frontend. Request read APIs và workflow detail (assign/status/history/
+AI summary) đã được nối; create request, alerts và statistics là các lát cắt tiếp theo và phải
 bám contract đã được xác nhận.
 
 ```typescript
@@ -468,6 +468,23 @@ COPY --from=build /app/dist /usr/share/nginx/html
 **Gợi ý người làm:** vì backend đã chia A/B/C/D, FE có thể do **1–2 người phụ trách sau khi phần backend của họ xong** (thường A hoặc D rảnh sớm), hoặc mỗi người làm trang FE ứng với feature backend mình đã làm (dễ vì hiểu rõ API đó nhất). Ghi rõ đóng góp FE ở slide 11.
 
 **Rủi ro cần nhớ:** nếu quỹ thời gian eo hẹp → cắt theo thứ tự ngược (#8 → #7 → ...), giữ tối thiểu #1–#5 để demo trọn luồng chính. **Tuyệt đối không hi sinh chất lượng backend để làm FE** — backend mới là thứ được chấm.
+
+### 13.1 Branch triển khai và bằng chứng Git Flow
+
+Các lát cắt UI lớn được phát triển tuần tự từ `develop`, merge bằng PR và **giữ branch trên
+remote sau merge** để có thể trình bày network graph/lịch sử phát triển với doanh nghiệp:
+
+| Thứ tự | Branch | Task/phạm vi | Quality gate trước PR |
+|---|---|---|---|
+| 1 | `feature/request-workflow-ui` | T-5.3/T-5.4: list acceptance, assign, status, history, AI summary | FE verify + workflow smoke |
+| 2 | `feature/request-create-ai-ui` | T-5.5: form CLIENT + classify/priority suggestion | FE verify + create smoke |
+| 3 | `feature/alerts-ui` | T-5.6: badge, polling, popover/list, mark-read/deep-link | FE verify + alert smoke |
+| 4 | `feature/stats-dashboard-ui` | T-5.7: KPI/charts ADMIN | FE verify + stats smoke |
+| 5 | `test/frontend-acceptance` | role/edge case/a11y/responsive, docs/task sync | FE verify + Docker full-stack smoke |
+
+Không tái sử dụng branch đã merge cho lát cắt mới. Nếu repository bật tự động xóa head
+branch sau merge, leader tạo lại branch cùng tên tại merge commit hoặc tắt tùy chọn đó trước
+khi merge các PR UI.
 
 **Dependency security note (02/08/2026):** React Router 7.18.2 hiện bị `npm audit` gắn
 advisory high `GHSA-qwww-vcr4-c8h2`, nhưng advisory chỉ áp dụng RSC Mode; FE này là Vite

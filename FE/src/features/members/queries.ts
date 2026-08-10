@@ -7,8 +7,8 @@ export const memberKeys = {
   detail: (id: number) => ['members', id] as const,
 };
 
-export function useMembers() {
-  return useQuery({ queryKey: memberKeys.all, queryFn: fetchMembers });
+export function useMembers(enabled = true) {
+  return useQuery({ queryKey: memberKeys.all, queryFn: fetchMembers, enabled });
 }
 
 export function useMember(id: number) {

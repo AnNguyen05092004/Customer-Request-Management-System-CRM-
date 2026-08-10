@@ -3,6 +3,7 @@ import { apiClient, unwrap } from '../../lib/apiClient';
 import { ApiError } from '../../lib/apiError';
 import type {
   ApiResponse,
+  AssignRequest,
   Category,
   HistoryResponse,
   PageResponse,
@@ -10,6 +11,8 @@ import type {
   RequestResponse,
   RequestStatus,
   Role,
+  StatusUpdateRequest,
+  SummaryResponse,
 } from '../../types/api';
 import { demoHistories, demoRequests } from './demoData';
 
@@ -112,4 +115,16 @@ export async function fetchRequestHistory(
   if (!request) throw new ApiError(`Request ${id} was not found.`, 404);
   if (!canReadDemoRequest(request, demoRole)) throw new ApiError('You do not have permission to view this request.', 403);
   return demoHistories[id] ?? [];
+}
+
+export function assignRequest(id: number, request: AssignRequest): Promise<RequestResponse> {
+  return unwrap(apiClient.patch<ApiResponse<RequestResponse>>(`/requests/${id}/assign`, request));
+}
+
+export function updateRequestStatus(id: number, request: StatusUpdateRequest): Promise<RequestResponse> {
+  return unwrap(apiClient.patch<ApiResponse<RequestResponse>>(`/requests/${id}/status`, request));
+}
+
+export function fetchRequestSummary(id: number): Promise<SummaryResponse> {
+  return unwrap(apiClient.get<ApiResponse<SummaryResponse>>(`/requests/${id}/summary`));
 }
