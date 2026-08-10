@@ -9,5 +9,11 @@ public record LlmProperties(boolean enabled, String provider, String model, long
         if (timeoutMs <= 0) {
             timeoutMs = 5000;
         }
+        if (enabled && (model == null || model.isBlank())) {
+            throw new IllegalArgumentException("LLM model must be configured when LLM is enabled");
+        }
+        if (enabled && (apiKey == null || apiKey.isBlank())) {
+            throw new IllegalArgumentException("GEMINI_API_KEY must be configured when LLM is enabled");
+        }
     }
 }

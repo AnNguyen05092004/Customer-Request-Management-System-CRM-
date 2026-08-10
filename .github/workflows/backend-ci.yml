@@ -31,3 +31,19 @@ jobs:
           name: jacoco-report
           path: BE/target/site/jacoco/
           if-no-files-found: ignore
+
+  full-stack-smoke:
+    name: Full-stack Docker smoke
+    needs: backend-verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the full stack
+        run: docker compose up --build --wait
+      - name: Show service logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop the full stack
+        if: always()
+        run: docker compose down --volumes

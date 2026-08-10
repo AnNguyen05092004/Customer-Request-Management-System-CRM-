@@ -90,7 +90,7 @@ export function RequestDetailPage() {
               ) : null}
               {!history.isLoading && !history.data?.length ? (
                 <Typography.Text type="secondary">
-                  No history is available yet. Workflow history will appear here after the backend module is integrated.
+                  No workflow history is available for this request yet.
                 </Typography.Text>
               ) : null}
             </Card>
@@ -127,7 +127,7 @@ export function RequestDetailPage() {
 
             <Card className="detail-card ai-placeholder" title={<Space><Bot size={18} />Bzcom AI insights</Space>}>
               <Typography.Paragraph type="secondary">
-                Summary and priority suggestions will appear here after the LLM API is integrated.
+                The backend summary API is available; this action will be enabled when the frontend control is connected.
               </Typography.Paragraph>
               <Button icon={<Bot size={16} />} block disabled>Generate summary</Button>
             </Card>

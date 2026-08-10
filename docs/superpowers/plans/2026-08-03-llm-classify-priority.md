@@ -1,5 +1,9 @@
 # LLM Classify & Suggest-Priority Implementation Plan
 
+> **Archived plan:** tài liệu này ghi lại phương án OpenAI ban đầu và không còn là contract triển khai.
+> Provider hiện tại là Gemini; xem [LLM.md](../../LLM.md), [ARCHITECTURE.md](../../ARCHITECTURE.md)
+> và [openapi.yaml](../../openapi.yaml) để lấy cấu hình/contract đang có hiệu lực.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement T-3.1 (`LlmService` interface + `MockLlmService`) and the classify/suggest-priority half of T-3.2 (`OpenAiLlmService` + `LlmController`) from `docs/TASKS.md`, owned by Member E.

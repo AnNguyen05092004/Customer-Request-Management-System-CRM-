@@ -44,14 +44,14 @@ Biến môi trường:
 
 ```text
 VITE_API_BASE_URL=http://localhost:8080/api
-VITE_REQUEST_DATA_MODE=demo
+VITE_REQUEST_DATA_MODE=api
 ```
 
-- `demo`: Auth/Member vẫn gọi backend thật; Request List/Detail dùng dữ liệu deterministic
-  có nhãn `Demo data` trong khi Request backend chưa merge. Demo vẫn mô phỏng phạm vi role:
+- `api` (**mặc định**): Request List/Detail/History gọi backend thật. Không fallback âm thầm
+  sang mock khi backend lỗi.
+- `demo`: chỉ bật rõ ràng khi làm UI cô lập; Auth/Member vẫn gọi backend thật, còn Request
+  List/Detail dùng dữ liệu deterministic có nhãn `Demo data`. Demo mô phỏng phạm vi role:
   ADMIN thấy tất cả, DEVELOPER thấy việc của developer seed, CLIENT thấy request của client seed.
-- `api`: Request List/Detail gọi đúng `/api/requests` và `/api/requests/{id}`. Không fallback
-  âm thầm sang mock khi backend lỗi.
 
 ## Quality gate
 
@@ -101,10 +101,9 @@ src/
 
 Page không gọi Axios trực tiếp: `Page → query hook → API function → apiClient`.
 
-## Handoff khi backend feature merge
+## Handoff các phần FE còn lại
 
-- Member B chuyển `VITE_REQUEST_DATA_MODE=api`, xác nhận list/filter/page/detail và cập nhật
-  `features/requests/api.ts` nếu contract đã được duyệt thay đổi.
+- Request read flow hiện đã chạy ở `api` mode theo mặc định và đã nối list/filter/page/detail/history.
 - Member C thêm assign/status/history mutations trong Request detail, luôn gửi
   `expectedVersion` từ response mới nhất.
 - Member D thêm Alert/LLM features và query invalidation liên quan.
