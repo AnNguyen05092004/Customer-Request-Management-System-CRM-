@@ -73,18 +73,24 @@ Format: `type: mô tả ngắn (tiếng Anh hoặc Việt, thì hiện tại)`
 
 1. Push feature branch → mở PR vào `develop`.
 2. Điền **PR template** (§6): mô tả thay đổi + checklist.
-3. **Bắt buộc ≥1 review** của thành viên khác mới được merge (đề yêu cầu).
+3. Với team nhiều người, yêu cầu ≥1 review của thành viên khác trước khi merge. Cấu hình
+   hiện tại bắt buộc bằng GitHub trên `main`; `develop` để 0 approval vì leader đang thao tác
+   một mình và GitHub không tính self-approval, nhưng vẫn phải có PR + ba CI check xanh.
 4. Reviewer kiểm: logic đúng? có test? có Swagger? theo convention?
 5. CI phải **xanh** (build + test pass) mới merge được.
-6. Merge → xoá feature branch.
+6. Sau merge, có thể xoá branch nhỏ đã hết giá trị. Riêng các branch UI milestone được liệt
+   kê ở [FRONTEND.md §13.1](./FRONTEND.md#131-branch-triển-khai-và-bằng-chứng-git-flow)
+   phải giữ trên remote để làm bằng chứng network graph/demo doanh nghiệp.
 
 > **Ai review ai** (gợi ý cho 4 người): A↔B, C↔D chéo nhau; phần logic nặng (C) nên có 2 người xem. Không tự approve PR của chính mình.
 
 ## 4. Branch protection
 
-Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và** `develop`:
+Cấu hình thực tế trên GitHub (`Settings → Branches`) cho `main` và `develop`:
 - ☑ Require a pull request before merging
-- ☑ Require approvals: **1**
+- `main`: ☑ Require approvals: **1**
+- `develop`: Require approvals: **0** (owner-only hiện tại; working agreement vẫn yêu cầu
+  peer review khi team cùng làm)
 - ☑ Require status checks to pass (chọn `Backend verify`, `Frontend verify` và
   `Full-stack Docker smoke` từ GitHub Actions)
 - ☑ Do not allow bypassing the above settings

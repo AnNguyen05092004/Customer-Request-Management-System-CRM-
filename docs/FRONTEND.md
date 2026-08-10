@@ -315,9 +315,9 @@ export const useUpdateStatus = (id: number) => {
 
 ## 9. Routing & bản đồ trang
 
-Đây là bản đồ route của frontend. Request read APIs và workflow detail (assign/status/history/
-AI summary) đã được nối; create request, alerts và statistics là các lát cắt tiếp theo và phải
-bám contract đã được xác nhận.
+Đây là bản đồ route đã triển khai của frontend. Toàn bộ Auth, Member, Request workflow,
+AI, Alert và Statistics đã nối API thật theo contract; demo adapter chỉ còn là chế độ phát
+triển UI cô lập được bật tường minh.
 
 ```typescript
 // App.tsx
@@ -353,6 +353,11 @@ bám contract đã được xác nhận.
 | Members | ✅ | | |
 | Thống kê | ✅ | | |
 | Alerts (chuông) | ✅ | ✅ | ✅ |
+
+Header có global search desktop. Submit điều hướng tới
+`/requests?keyword=<encoded-value>` để dùng lại filter server-side canonical; không tạo một
+cơ chế tìm kiếm client-side thứ hai. AI action nằm đúng ngữ cảnh ở Request Create/Detail,
+không có nút assistant placeholder riêng.
 
 ## 10. Đặc tả từng trang
 
@@ -502,11 +507,9 @@ Không tái sử dụng branch đã merge cho lát cắt mới. Nếu repository
 branch sau merge, leader tạo lại branch cùng tên tại merge commit hoặc tắt tùy chọn đó trước
 khi merge các PR UI.
 
-**Dependency security note (02/08/2026):** React Router 7.18.2 hiện bị `npm audit` gắn
-advisory high `GHSA-qwww-vcr4-c8h2`, nhưng advisory chỉ áp dụng RSC Mode; FE này là Vite
-declarative SPA, không dùng RSC/SSR/server actions/framework mode. Không downgrade về
-7.11.0 vì bản đó có nhiều advisory XSS/DoS phạm vi rộng hơn; theo dõi và nâng ngay khi có
-bản vá upstream.
+**Dependency security status (10/08/2026):** `npm audit --audit-level=moderate` báo
+`found 0 vulnerabilities`. Tiếp tục dùng lockfile + `npm ci`; không chạy
+`npm audit fix --force` hoặc đổi major version ngoài PR có kiểm thử.
 
 ---
 

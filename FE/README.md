@@ -60,16 +60,13 @@ npm run verify
 ```
 
 Lệnh trên chạy lint, TypeScript strict check, unit/component tests và production build.
-CI tương ứng là `Frontend CI / verify`.
+Required status check tương ứng trên GitHub là `Frontend verify`.
 
-### Dependency audit note
+### Dependency audit status
 
-Ngày 02/08/2026, `npm audit` báo advisory high `GHSA-qwww-vcr4-c8h2` cho React Router
-7.18.2. Advisory này chỉ áp dụng cho **RSC Mode action execution**; ứng dụng này là Vite
-declarative SPA, không bật RSC, SSR, server action hoặc React Router framework mode. Bản
-7.11.0 mà npm gợi ý hạ xuống có nhiều advisory XSS/DoS phạm vi rộng hơn, nên dự án giữ
-7.18.2 và cần nâng lên bản vá mới ngay khi upstream phát hành. Không chạy
-`npm audit fix --force` để downgrade mù quáng.
+Ngày 10/08/2026, `npm audit --audit-level=moderate` báo `found 0 vulnerabilities`. Dùng
+`npm ci` để bám lockfile; không chạy `npm audit fix --force` hoặc đổi major version mà
+không qua PR và quality gate.
 
 ## Tài khoản demo backend
 
@@ -101,7 +98,7 @@ src/
 
 Page không gọi Axios trực tiếp: `Page → query hook → API function → apiClient`.
 
-## Handoff các phần FE còn lại
+## Trạng thái tính năng
 
 - Request read flow hiện đã chạy ở `api` mode theo mặc định và đã nối list/filter/page/detail/history.
 - Request detail đã nối assign/status/history/AI summary; mọi workflow mutation gửi
@@ -109,7 +106,7 @@ Page không gọi Axios trực tiếp: `Page → query hook → API function →
 - Request create đã nối AI category/priority suggestion và được giới hạn cho CLIENT.
 - Alert bell và `/alerts` đã nối polling, filter, mark-read và request deep-link.
 - ADMIN dashboard `/stats` đã nối KPI, category donut và developer workload bars.
-- Member D thêm Alert/LLM features và query invalidation liên quan.
+- Global search dùng server-backed Request keyword filter; Phase 5 frontend đã hoàn tất.
 - Mọi API/type change phải bám `docs/openapi.yaml` và có test trong cùng PR.
 
 Không commit `.env.local`, token, API key, `node_modules`, `dist` hoặc `coverage`.

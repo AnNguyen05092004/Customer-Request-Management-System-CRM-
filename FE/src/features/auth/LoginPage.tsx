@@ -33,7 +33,7 @@ export function LoginPage() {
 
   return (
     <main className="auth-page">
-      <Card className="auth-card" bordered>
+      <Card className="auth-card" variant="outlined">
         <div className="auth-brand">
           <div className="auth-brand__mark">B</div>
           <Typography.Title level={1}>Bzcom</Typography.Title>
