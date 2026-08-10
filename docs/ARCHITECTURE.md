@@ -50,8 +50,8 @@
 ```
 ┌──────────┐   HTTP/JWT   ┌───────────────────┐   HTTPS   ┌──────────────┐
 │  ADMIN   │─────────────▶│                   │──────────▶│ LLM Provider │
-│ DEVELOPER│              │   Bzcom CRM API   │           │ (OpenAI/     │
-│  CLIENT  │◀─────────────│   (Spring Boot)   │◀──────────│  Claude)     │
+│ DEVELOPER│              │   Bzcom CRM API   │           │  (Gemini)    │
+│  CLIENT  │◀─────────────│   (Spring Boot)   │◀──────────│              │
 └──────────┘   JSON       └─────────┬─────────┘           └──────────────┘
  (qua Swagger/Postman)              │ JDBC
                                     ▼
@@ -65,7 +65,7 @@
 |---|---|---|
 | CRM API | Spring Boot 3.5.5 (Java 21) | Toàn bộ business logic, REST endpoints, Swagger |
 | Database | PostgreSQL 16 | Lưu trữ bền vững; Flyway quản version schema |
-| LLM Provider | OpenAI/Claude API (external) | Phân loại/tóm tắt — có **mock** thay thế khi offline |
+| LLM Provider | Google Gemini API (external) | Phân loại/tóm tắt — có **mock deterministic** khi `llm.enabled=false` và fallback khi provider lỗi |
 
 ## 4. Kiến trúc phân lớp
 

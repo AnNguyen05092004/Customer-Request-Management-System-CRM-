@@ -3,6 +3,11 @@
 > Tài liệu bàn giao để thành viên A/B/C/D cài môi trường, bắt đầu feature và phối hợp
 > nhất quán trên nhánh `develop`. Đọc một lượt trước khi code và dùng checklist cuối file
 > trước mỗi Pull Request.
+>
+> **Trạng thái 2026-08-10:** foundation và các backend feature A/B/C/D đã merge vào
+> `develop`. Các bước chia nhánh/phụ thuộc phía dưới là lịch sử khởi động và quy tắc cho
+> feature tiếp theo; xem [TASKS.md](./TASKS.md) để biết phần DoD còn mở, không tạo lại các
+> feature đã có.
 
 ## 1. Môi trường cần cài
 

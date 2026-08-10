@@ -109,13 +109,15 @@ Bảng **"Hiring Evaluation Criteria"** ở cuối đề chính là thước đo
 | Boilerplate | Lombok | — | Giảm getter/setter |
 | Validation | Jakarta Bean Validation | — | `@Valid` |
 | Test | JUnit 5 + Mockito (+ Testcontainers) | — | Unit + integration |
-| LLM | OpenAI API **hoặc** Anthropic Claude API | — | Qua `LlmService` trừu tượng |
+| LLM | Google Gemini API + mock deterministic | `gemini-2.5-flash` | Qua `LlmService` trừu tượng; provider thật bật bằng config |
 | Đóng gói | Docker + Docker Compose | — | Demo "1 lệnh chạy" |
 | CI | GitHub Actions | — | Build + test trên mỗi PR |
 | Build tool | Maven (hoặc Gradle) | — | Quản lý dependency |
 
 ### 3.1 Ghi chú về Frontend
-Đề là **backend-oriented**; **Swagger UI chính là phần demo API**. **Không** làm full frontend (rủi ro tốn giờ). Nếu dư thời gian ở cuối → một trang dashboard tĩnh hiển thị thống kê là "wow" vừa đủ (xếp vào *stretch goal*).
+Đề là **backend-oriented** nên Swagger UI vẫn là contract/demo API chính. Team đã bổ sung
+React FE theo hướng bonus; FE không được làm thay đổi hoặc che lỗi backend contract và phải
+đi qua cùng quality gate/Compose smoke test.
 
 ### 3.2 Dependencies chính (Maven)
 ```
@@ -544,7 +546,7 @@ Input: "<description của request>"
 - **LLM chỉ gợi ý** — quyết định cuối do người/logic xác nhận. Nói được điều này trong PPT = điểm cộng lớn.
 
 ### 8.4 Mock mode (chống chết demo)
-`LlmService` là interface, có 2 impl: `OpenAiLlmService` (thật) và `MockLlmService` (trả kết quả cố định theo keyword). Chọn qua config `llm.enabled=true/false` → **demo không bao giờ chết vì lỗi mạng/API key**.
+`LlmService` là interface, có 2 impl: `GeminiLlmService` (thật) và `MockLlmService` (trả kết quả deterministic theo keyword). Chọn qua config `llm.enabled=true/false`; provider thật có timeout + fallback, còn mock là mặc định để **demo không chết vì lỗi mạng/API key**.
 
 ---
 
@@ -823,7 +825,7 @@ public interface LlmService {
     PriorityResult suggestPriority(String description);
     String summarize(RequestSummaryInput request);
 }
-// OpenAiLlmService implements LlmService  → gọi API thật
+// GeminiLlmService implements LlmService  → gọi Gemini API thật
 // MockLlmService  implements LlmService   → trả kết quả theo keyword (dùng khi llm.enabled=false)
 ```
 

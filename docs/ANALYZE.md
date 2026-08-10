@@ -183,7 +183,7 @@
 - **Luồng:** hệ thống áp filter phạm vi theo role (BR-02/03) rồi mới áp filter tổ hợp + phân trang + sort. Trả `200` + `Page`.
 
 ### UC-05 — LLM auto-classify
-- **Actor:** ADMIN/CLIENT · `POST /api/requests/classify` body `{description}`
+- **Actor:** mọi member đã xác thực (ADMIN/DEVELOPER/CLIENT) · `POST /api/requests/classify` body `{description}`
 - **Luồng:** gọi `LlmService.classify(description)` → JSON `{category, confidence, reason}`. Nếu LLM lỗi/không parse được → fallback rule keyword (BR-13, xem [LLM.md](./LLM.md)). Trả `200`.
 
 ## 9. Acceptance Criteria & truy vết rubric

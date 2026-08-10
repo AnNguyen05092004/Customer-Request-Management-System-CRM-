@@ -1,5 +1,9 @@
 # Member D handoff — Alert
 
+> **Handoff đã hoàn tất:** Alert, LLM, Swagger contract audit và CI đều đã merge vào
+> `develop`. Nội dung dưới đây giữ lại để mô tả public integration contract; trạng thái
+> công việc hiện tại nằm ở [TASKS.md](./TASKS.md).
+
 ## Scope implemented
 
 - T-2.D1: `AlertService.create(targetMemberId, requestId, type, message)` persists all three `AlertType` values.
@@ -40,9 +44,9 @@ cd BE
 
 Use Java 21 and start Docker Desktop first. The full verification requires Docker because integration tests use PostgreSQL Testcontainers.
 
-## Remaining Member D work
+## Trạng thái nghiệm thu
 
-- T-2.D3 Swagger/runtime contract audit.
-- T-3.1 mock LLM now compiles; add dedicated mock tests before marking the task complete.
-- T-3.2 LLM APIs, OpenAI provider, fallback and tests remain.
-- Run and record the full Maven quality gate before marking T-2.D1/D2 complete in `docs/TASKS.md`.
+- T-2.D1/D2 đã có unit test cho create/list/read/ownership và đã merge.
+- T-2.D3 được khóa bằng contract test so runtime `/v3/api-docs` với `docs/openapi.yaml`.
+- LLM dùng `MockLlmService` hoặc `GeminiLlmService`, có fallback và test riêng.
+- GitHub Actions chạy Maven verify, frontend verify và full-stack Docker smoke.
