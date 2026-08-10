@@ -23,6 +23,9 @@ function renderRoutes(context: AuthContextValue, initialPath = '/members') {
             <Route element={<RoleRoute allow={['ADMIN']} />}>
               <Route path="/members" element={<><Outlet /><div>Member screen</div></>} />
             </Route>
+            <Route element={<RoleRoute allow={['CLIENT']} />}>
+              <Route path="/requests/new" element={<div>Create request screen</div>} />
+            </Route>
           </Route>
         </Routes>
       </MemoryRouter>
@@ -44,5 +47,14 @@ describe('route guards', () => {
   it('allows administrators into member routes', () => {
     renderRoutes({ ...baseContext, isAuthenticated: true, role: 'ADMIN' });
     expect(screen.getByText('Member screen')).toBeInTheDocument();
+  });
+
+  it('allows clients and blocks administrators on the request create route', () => {
+    const clientView = renderRoutes({ ...baseContext, isAuthenticated: true, role: 'CLIENT' }, '/requests/new');
+    expect(screen.getByText('Create request screen')).toBeInTheDocument();
+    clientView.unmount();
+
+    renderRoutes({ ...baseContext, isAuthenticated: true, role: 'ADMIN' }, '/requests/new');
+    expect(screen.getByText('Forbidden screen')).toBeInTheDocument();
   });
 });

@@ -62,11 +62,14 @@
 ### [x] T-0.3 — Tạo GitHub repo + branch + protection
 - Owner: D   Depends on: —   Ước lượng: 15′
 - Refs: [GIT_WORKFLOW.md](./GIT_WORKFLOW.md)
-- Việc: tạo repo; tạo `main` + `develop`; bật branch protection cho cả hai (require PR + 1 approval + ba required status checks); thêm `.gitignore` (Java, Node, `.env`), `pull_request_template.md`.
+- Việc: tạo repo; tạo `main` + `develop`; bật branch protection cho cả hai (require PR + ba
+  required status checks; main yêu cầu 1 approval, develop hiện 0 khi owner làm một mình);
+  thêm `.gitignore` (Java, Node, `.env`), `pull_request_template.md`.
 - DoD: không ai push thẳng được vào `main`/`develop` (thử push trực tiếp bị chặn); template PR hiện khi mở PR.
-- Bằng chứng: GitHub branch protection của `main` và `develop` yêu cầu PR, 1 approval,
+- Bằng chứng (10/08/2026): `main` yêu cầu 1 approval; `develop` yêu cầu 0 approval vì
+  GitHub không tính self-approval trong giai đoạn owner-only. Cả hai vẫn yêu cầu PR,
   conversation resolution và ba strict checks `Backend verify`, `Frontend verify`,
-  `Full-stack Docker smoke`; rule áp dụng cả administrator, không cho force-push/xóa branch.
+  `Full-stack Docker smoke`; rule áp dụng administrator, không cho force-push/xóa branch.
 
 ### [ ] T-0.4 — Chốt cấu trúc package & quy ước
 - Owner: ALL (A dẫn)   Depends on: —   Ước lượng: 15′
@@ -324,14 +327,16 @@
 - Việc: Form login → `login()` → lưu token+role → điều hướng `/requests`. Lỗi 401 → message.error.
 - DoD: login 3 role thành công; sai password hiện lỗi; token gắn vào các request sau (kiểm Network).
 
-### [ ] T-5.3 — RequestListPage (Table + filter + paging server-side)
+### [x] T-5.3 — RequestListPage (Table + filter + paging server-side)
 - Owner: FE   Depends on: T-5.2, T-2.B3   Ước lượng: 40′
 - Refs: [FRONTEND.md §8,§10](./FRONTEND.md#8-data-fetching-với-tanstack-query)
 - Việc: `useRequests` + antd `Table` (StatusTag/Priority tag), filter bar (status/category/priority/keyword), pagination + sort map sang backend. Nút "Tạo request" chỉ CLIENT.
 - DoD: 3 role thấy đúng phạm vi; filter/sort/paging gọi backend đúng; loading/empty state ok.
-- Trạng thái FE: UI responsive + URL filter/sort/page + OpenAPI-aligned API hook + explicit
-  demo adapter đã xong; Request backend đã merge và API mode là mặc định. Giữ task mở đến
-  khi kiểm chứng acceptance phạm vi đủ 3 role trên FE/API thật.
+- Bằng chứng FE: desktop table + mobile card, URL-backed filter/sort/page, loading/error/
+  empty state và explicit demo adapter đều đã xong. Full-stack acceptance qua Nginx proxy
+  đăng nhập đủ ADMIN/DEVELOPER/CLIENT, xác nhận developer chỉ nhận assignee id 2, client
+  chỉ nhận client id 4 và filter/paging/sort trả đúng contract. Global search điều hướng vào
+  cùng server-backed `keyword` filter; component test kiểm URL encoding.
 
 ### [x] T-5.4 — RequestDetailPage (history timeline + assign + status + AI summary)
 - Owner: FE   Depends on: T-5.3, T-2.C3, T-2.C4, T-2.C2   Ước lượng: 45′
@@ -388,7 +393,8 @@
   Root compose dùng Nginx reverse proxy `/api` → `backend:8080`, có healthcheck cho cả ba
   service và vẫn giữ `BE/compose.yaml` cho workflow chỉ chạy backend.
 
-> **🚩 Milestone M5:** FE chạy full, demo được qua giao diện.
+> **🚩 Milestone M5 — hoàn thành:** T-5.1 đến T-5.9 đã đạt DoD; FE chạy full và demo được
+> qua giao diện. Rehearsal nghiệp vụ cho buổi trình bày vẫn thuộc T-6.1.
 
 ---
 

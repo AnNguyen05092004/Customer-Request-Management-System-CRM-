@@ -1,10 +1,8 @@
 import {
-  Bot,
   ChevronDown,
   ChartNoAxesCombined,
   LogOut,
   Menu as MenuIcon,
-  Search,
   SquarePlus,
   TicketCheck,
   Users,
@@ -125,16 +123,18 @@ export function AppLayout() {
               <Button type="text" aria-label="Open navigation" icon={<MenuIcon />} onClick={() => setDrawerOpen(true)} />
             ) : null}
             <div className="app-header__mobile-brand">Bzcom CRM</div>
-            <Input
+            <Input.Search
               className="global-search"
-              prefix={<Search aria-hidden size={17} />}
               placeholder="Search requests..."
-              aria-label="Global search (coming soon)"
-              disabled
+              aria-label="Search requests"
+              allowClear
+              onSearch={(value) => {
+                const keyword = value.trim();
+                void navigate(keyword ? `/requests?keyword=${encodeURIComponent(keyword)}` : '/requests');
+              }}
             />
           </Space>
           <Space size="small">
-            <Button type="text" aria-label="AI assistant (coming soon)" icon={<Bot />} disabled />
             <AlertBell />
             <div className="user-menu-container" ref={userMenuRef}>
               <Button

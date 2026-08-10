@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuth } from '../auth/useAuth';
 import { AppLayout } from './AppLayout';
@@ -15,12 +15,17 @@ function renderLayout() {
     <MemoryRouter initialEntries={['/requests']}>
       <Routes>
         <Route path="/requests" element={<AppLayout />}>
-          <Route index element={<div>Request content</div>} />
+          <Route index element={<><div>Request content</div><LocationProbe /></>} />
         </Route>
         <Route path="/login" element={<div>Login page</div>} />
       </Routes>
     </MemoryRouter>,
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <div data-testid="location">{location.pathname}{location.search}</div>;
 }
 
 describe('AppLayout account menu', () => {
@@ -64,5 +69,15 @@ describe('AppLayout account menu', () => {
 
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('sends global search terms to the server-backed request list URL', async () => {
+    const user = userEvent.setup();
+    renderLayout();
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search requests' }), ' login timeout ');
+    await user.keyboard('{Enter}');
+
+    expect(screen.getByTestId('location')).toHaveTextContent('/requests?keyword=login%20timeout');
   });
 });
