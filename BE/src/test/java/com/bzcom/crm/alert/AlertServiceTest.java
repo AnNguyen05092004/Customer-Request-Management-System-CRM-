@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -71,5 +73,22 @@ class AlertServiceTest {
         assertThat(captor.getValue().getTargetMemberId()).isEqualTo(20L);
         assertThat(captor.getValue().getRequestId()).isEqualTo(10L);
         assertThat(captor.getValue().getAlertType()).isEqualTo(type);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "\t"})
+    void shouldRejectBlankAlertMessage(String message) {
+        assertThatThrownBy(() -> new AlertService(alertRepository).create(20L, 10L, AlertType.ASSIGNED, message))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Alert message must not be blank");
+    }
+
+    @Test
+    void shouldRejectOversizedAlertMessage() {
+        assertThatThrownBy(
+                        () -> new AlertService(alertRepository).create(20L, 10L, AlertType.ASSIGNED, "x".repeat(256)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Alert message must not exceed 255 characters");
     }
 }

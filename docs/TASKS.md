@@ -4,7 +4,7 @@
 >
 > **Cách dùng:** làm theo thứ tự Phase. Trong một phase, các task cùng owner làm tuần tự; khác owner có thể làm song song **nếu đã thoả `Depends on`**. Tick `[x]` khi **đạt toàn bộ Definition of Done (DoD)**, không phải khi "viết xong code".
 >
-> **Snapshot `develop` 2026-08-10:** backend feature đã merge; 44 unit test + 19 integration
+> **Snapshot `develop` 2026-08-10:** backend feature đã merge; 49 unit test + 25 integration
 > test và full-stack Docker smoke đang xanh. Task còn `[ ]` có thể đã có implementation nhưng
 > vẫn thiếu một phần DoD được ghi rõ (test nghiệm thu, bằng chứng thủ công hoặc FE action),
 > không đồng nghĩa phải viết lại từ đầu.
@@ -85,9 +85,10 @@
 
 ### [x] T-1.2 — Cấu hình DB + Flyway + profiles
 - Owner: A   Depends on: T-1.1   Ước lượng: 15′
-- Refs: [ERD.md §7](./ERD.md#7-flyway-migration-v1__initsql), [ARCHITECTURE.md §9](./ARCHITECTURE.md#9-cấu-hình-profile--môi-trường)
+- Refs: [ERD.md §7](./ERD.md#7-flyway-schema-v1__initsql--v3__harden_alert_messagesql), [ARCHITECTURE.md §9](./ARCHITECTURE.md#9-cấu-hình-profile--môi-trường)
 - Việc: tạo `application.yml` với profile `dev`/`docker` đều trỏ PostgreSQL qua env; test integration dùng `@ServiceConnection` từ Testcontainers PostgreSQL. Tạo `db/migration/V1__init.sql` (5 bảng) dùng mọi môi trường; seed demo đặt riêng trong `db/demo` và chỉ bật ở `dev`/`docker`. Bật Flyway, đặt `ddl-auto=validate`.
-- DoD: chạy profile `dev` → Flyway tạo 5 bảng + index; test integration khởi PostgreSQL container và log Flyway "Successfully applied 1 migration".
+- DoD: chạy profile `dev` → Flyway tạo 5 bảng + index; integration test khởi PostgreSQL
+  container và áp dụng thành công V1 + demo V2 + schema hardening V3.
 
 ### [x] T-1.3 — Common: ApiResponse + PageResponse
 - Owner: A   Depends on: T-1.1   Ước lượng: 10′
@@ -95,13 +96,11 @@
 - Việc: `common/response/ApiResponse.java` (record, `ok`/`created`/`error`), `PageResponse.java` (content/page/size/totalElements/totalPages).
 - DoD: unit test `ApiResponse.ok(x)` → status=200, message="success", data=x.
 
-### [ ] T-1.4 — Common: Exception + GlobalExceptionHandler
+### [x] T-1.4 — Common: Exception + GlobalExceptionHandler
 - Owner: A   Depends on: T-1.3   Ước lượng: 20′
 - Refs: [kế hoạch §16.2](../Bzcom_CRM_Ke_Hoach_Thiet_Ke.md), [BUSINESS_LOGIC.md §9](./BUSINESS_LOGIC.md#9-bảng-edge-case-tổng-hợp)
 - Việc: `BusinessException` immutable (chứa `ErrorCode`) + `ErrorCode` enum (mã ổn định, message an toàn, HTTP status). `GlobalExceptionHandler` (`@RestControllerAdvice`) xử lý: validation→400, JSON field lạ/malformed→400, AccessDenied→403, EntityNotFound→404, InvalidStatusTransition/RequestNotAssigned/OptimisticLock→409, fallback→500. Tất cả trả `ApiResponse.error`; fallback chỉ log stacktrace ở server, không trả chi tiết nội bộ.
 - DoD: test: ném mỗi exception → nhận đúng status + envelope; không lộ stacktrace.
-- Trạng thái: implementation và các lỗi chính đã được E2E cover; còn thiếu test ma trận đầy
-  đủ 404/422/500 trước khi tick theo đúng DoD "mỗi exception".
 
 ### [x] T-1.5 — Common: BaseTimeEntity + JPA Auditing
 - Owner: A   Depends on: T-1.1   Ước lượng: 10′
@@ -133,13 +132,13 @@
 - Việc: thêm `RefreshToken` entity/repository (opaque token hash, expiresAt, revokedAt). `POST /login`: BCrypt → access JWT 15 phút + refresh 7 ngày, lưu hash. `POST /refresh`: chỉ phát cặp mới khi revoke token cũ thành công qua `UPDATE ... WHERE revoked_at IS NULL AND expires_at > now()` (hoặc khóa row token) trong cùng transaction. `POST /logout`: nhận refresh token, revoke idempotent. Login/refresh/logout không phụ thuộc Bearer access token. DTO: LoginRequest, RefreshTokenRequest (32–512 ký tự), TokenResponse.
 - DoD: login đúng → 200 + tokens + role; refresh hợp lệ trả cặp mới và token cũ không refresh được; **hai refresh song song trên cùng token chỉ đúng một 200, một 401**; logout → refresh token không dùng lại được; sai password/token hết hạn → 401; access token dùng được cho endpoint bảo vệ. + DoD chung.
 
-### [ ] T-1.10 — Seed data
+### [x] T-1.10 — Seed data
 - Owner: A   Depends on: T-1.8   Ước lượng: 10′
 - Refs: [ERD.md §8](./ERD.md#8-demo-seed-v2__seed_demosql), [README §5](./README.md)
 - Việc: `db/demo/V2__seed_demo.sql` chỉ được thêm vào Flyway locations của profile `dev`/`docker`: admin/dev1/dev2/client1 (password BCrypt của `1234`) + vài request mẫu. Dùng hash BCrypt thật; production profile chỉ chạy `db/migration`.
 - DoD: sau khi start (profile demo), login được cả 4 tài khoản; có sẵn request để test filter/stats.
-- Trạng thái: migration seed và BCrypt hash thật đã chạy trong Docker; còn thiếu biên bản
-  smoke login đủ cả 4 tài khoản trước khi tick.
+- Bằng chứng: `DemoSeedIT` chạy profile `dev` trên PostgreSQL, áp dụng V1→V2→V3, đăng nhập
+  đủ bốn tài khoản bằng `1234` và xác nhận ba request mẫu.
 
 > **🚩 Milestone M1:** merge Phase 1 vào `develop`. B/C/D bắt đầu Phase 2. A thông báo "nền tảng sẵn sàng".
 
@@ -160,27 +159,23 @@
 - Việc: `Request` entity kế thừa BaseTimeEntity (enum category/priority/status, `@Version int version`, clientId, assignedDeveloperId nullable). `RequestRepository extends JpaRepository, JpaSpecificationExecutor`.
 - DoD: entity map đúng bảng; save/find hoạt động trong Testcontainers PostgreSQL.
 
-### [ ] T-2.B2 — Tạo request (CLIENT) + trigger alert HIGH
+### [x] T-2.B2 — Tạo request (CLIENT) + trigger alert HIGH
 - Owner: B   Depends on: T-2.B1, T-2.D1   Ước lượng: 25′
 - Refs: [openapi.yaml](./openapi.yaml), [BUSINESS_LOGIC.md §5.3](./BUSINESS_LOGIC.md#53-pseudocode-tạo-request-high)
 - Việc: `POST /api/requests` (CLIENT only, `@PreAuthorize`), status mặc định PENDING, clientId = current user. `@Transactional`: nếu priority=HIGH → gọi `AlertService.create(...)` cho mọi ADMIN.
 - DoD: CLIENT tạo → 201; role khác → 403; tạo HIGH → mọi ADMIN có alert (cùng transaction). + DoD chung.
-- Trạng thái: create 201 và HIGH alert đã có E2E; còn thiếu IT role khác → 403.
 
-### [ ] T-2.B3 — Danh sách request: filter + sort + paging + phạm vi role
+### [x] T-2.B3 — Danh sách request: filter + sort + paging + phạm vi role
 - Owner: B   Depends on: T-2.B1   Ước lượng: 35′
 - Refs: [BUSINESS_LOGIC.md §1.3](./BUSINESS_LOGIC.md#13-ma-trận-truy-cập-dữ-liệu-request-áp-trước-mọi-filter-khác), [OPENAPI.md §7](./OPENAPI.md)
 - Việc: `GET /api/requests` với `Pageable` + JPA `Specification` (status/category/priority/keyword). **Áp phạm vi role trước:** ADMIN=all, CLIENT=client_id, DEVELOPER=assigned_developer_id. Trả `PageResponse`.
 - DoD: 3 role gọi → thấy đúng phạm vi; filter tổ hợp + `?page&size&sort` hoạt động; keyword tìm trong title/description. + DoD chung.
-- Trạng thái: code/filter/paging đã merge; còn thiếu integration test dữ liệu cho đủ 3 role
-  và filter tổ hợp trước khi tick hoàn tất.
 
-### [ ] T-2.B4 — Chi tiết request (kiểm quyền xem)
+### [x] T-2.B4 — Chi tiết request (kiểm quyền xem)
 - Owner: B   Depends on: T-2.B1   Ước lượng: 15′
 - Refs: [BUSINESS_LOGIC.md §1.3](./BUSINESS_LOGIC.md#13-ma-trận-truy-cập-dữ-liệu-request-áp-trước-mọi-filter-khác)
 - Việc: `GET /api/requests/{id}`. Kiểm ownership: ngoài phạm vi role → 403; không tồn tại → 404.
 - DoD: chủ/ADMIN xem được; người khác → 403; id sai → 404. + DoD chung.
-- Trạng thái: endpoint và ownership 403 đã có IT; còn thiếu case 404 riêng trước khi tick.
 
 ### Nhánh C — Workflow logic (nặng nhất — A phụ khi rảnh)
 
@@ -190,20 +185,17 @@
 - Việc: enum `RequestStatus` với `ALLOWED` map + `canTransitionTo()`. `InvalidStatusTransitionException`.
 - DoD: **unit test đầy đủ**: PENDING→IN_PROGRESS ok; IN_PROGRESS→DONE ok; DONE→* false; PENDING→DONE false; IN_PROGRESS→PENDING false.
 
-### [ ] T-2.C2 — RequestHistory entity + HistoryService
+### [x] T-2.C2 — RequestHistory entity + HistoryService
 - Owner: C   Depends on: M1   Ước lượng: 20′
 - Refs: [BUSINESS_LOGIC.md §4](./BUSINESS_LOGIC.md#4-automatic-history-recording), [ERD.md](./ERD.md)(request_histories)
 - Việc: `RequestHistory` entity + repo. `HistoryService.record(request, changedBy, from, to, memo)`. `GET /api/requests/{id}/history` sắp xếp `changedAt ASC`, bắt buộc gọi chung `RequestAccessPolicy.assertCanRead` như detail.
 - DoD: gọi record → tạo bản ghi; chủ/ADMIN lấy history đúng thứ tự, DEV/CLIENT không thuộc request → 403. + DoD chung.
-- Trạng thái: record/thứ tự history đã chạy trong E2E; còn thiếu IT history ngoài phạm vi → 403.
 
-### [ ] T-2.C3 — Auto-assign + manual assign
+### [x] T-2.C3 — Auto-assign + manual assign
 - Owner: C   Depends on: T-2.C2, T-2.B1, T-2.D1   Ước lượng: 40′
 - Refs: [BUSINESS_LOGIC.md §2](./BUSINESS_LOGIC.md#2-auto-assignment)
 - Việc: `AssignService` + `PATCH /api/requests/{id}/assign` (ADMIN only). Command bắt buộc `expectedVersion`; auto=true khóa developer theo `id ASC` (`PESSIMISTIC_WRITE`) rồi tính taskCount động (COUNT chưa DONE), min → tie-break `last_completed_at` desc (null cuối); 0 developer → 422. auto=false → dùng developerId (phải là DEVELOPER). `@Transactional`: version check + gán + flush (`@Version`) + history + alert.
 - DoD: **unit test thuật toán** (case count khác nhau + case hoà tie-break như [ví dụ §2.3](./BUSINESS_LOGIC.md#23-ví-dụ-minh-hoạ-để-demoslide)); auto-assign chọn đúng dev; ghi history + alert; 0 dev → 422; role khác → 403. + DoD chung.
-- Trạng thái: auto/manual assign, history và alert đã merge; còn thiếu test ma trận thuật toán,
-  zero-developer 422 và permission trước khi tick.
 
 ### [x] T-2.C4 — Đổi status (state machine + optimistic lock + history + alert)
 - Owner: C   Depends on: T-2.C1, T-2.C2, T-2.D1   Ước lượng: 35′
@@ -250,12 +242,13 @@
 - DoD: classify/priority (mock) trả enum + confidence + reason; summary chỉ 1–2 câu và chặn request không thuộc quyền bằng 403; LLM lỗi → fallback không làm chết API (200); prompt lưu trong `prompt/`. + DoD chung.
 - Trạng thái: xong toàn bộ sau khi B merge `Request` entity + `RequestAccessPolicy` (T-2.B1). `GET /{id}/summary` tái sử dụng `RequestService.getRequestDetail` (đã check `RequestAccessPolicy` → 403/404 sẵn). Đã gỡ một bản LLM khác do D merge trùng vào `develop` (thiếu fallback/timeout/test, sai contract endpoint `/summarize`) — xem PR #5. Provider thật đổi từ OpenAI sang Gemini (key OpenAI hết credit, team có key Gemini hoạt động) — đã verify bằng gọi API thật với prompt thật, phát hiện và sửa lỗi Gemini bọc JSON trong markdown code fence (khác OpenAI), có test regression.
 
-### [ ] T-3.3 — Statistics API
+### [x] T-3.3 — Statistics API
 - Owner: E   Depends on: M2   Ước lượng: 25′
 - Refs: [BUSINESS_LOGIC.md §6](./BUSINESS_LOGIC.md#6-statistics), [openapi.yaml](./openapi.yaml)(StatsResponse)
 - Việc: `GET /api/requests/stats` (ADMIN). total, completed, completionRate (total=0→0, tránh chia 0), byCategory (group), byDeveloper (assignedCount + doneCount).
 - DoD: số liệu đúng với seed data; total=0 không lỗi; role khác → 403. + DoD chung.
-- Trạng thái: `RequestStatsService` + `GET /api/requests/stats` (thêm vào `RequestController`, `@PreAuthorize("hasRole('ADMIN')")`) đã code xong, có unit test cho logic tổng hợp (total=0 → completionRate=0; byCategory/byDeveloper). CI thật (GitHub Actions, PR #5) đã chạy full `mvn -B verify` bao gồm integration test Testcontainers PostgreSQL (`AuthMemberIT`, `FoundationIT`, `RequestWorkflowIT`) — tất cả xanh, nên môi trường/schema không phải vấn đề. Giữ `[ ]` vì còn 1 phần DoD chưa có test riêng: chưa có integration test xác nhận cụ thể role khác ADMIN → 403 cho đúng endpoint `/stats` (đã thử ở mức `@WebMvcTest` nhưng `@PreAuthorize` không enforce trong slice đó — cần IT thật, xem PR #5).
+- Bằng chứng: unit test cover total=0 và aggregate; `RequestWorkflowIT` xác nhận ADMIN
+  nhận số liệu thật còn CLIENT nhận 403 tại đúng endpoint `/stats`.
 
 > **🚩 Milestone M3:** backend hoàn chỉnh tính năng. Tag `v0.9-backend`.
 
@@ -269,11 +262,14 @@
 - Việc: `BE/Dockerfile` multi-stage (Maven build → JRE slim). `BE/compose.yaml`: service `db` (postgres:16 + healthcheck + volume) + `app` (depends_on db healthy, env từ `.env`). `BE/.env.example`.
 - DoD: máy sạch chạy `docker compose up --build` → app lên, Flyway migrate, Swagger truy cập `:8080`; seed data có sẵn.
 
-### [ ] T-4.2 — Integration test luồng chính (E2E)
+### [x] T-4.2 — Integration test luồng chính (E2E)
 - Owner: ALL (mỗi người phần mình)   Depends on: M3   Ước lượng: 40′
 - Refs: [README §6](./README.md)(kịch bản demo), [BUSINESS_LOGIC.md §9](./BUSINESS_LOGIC.md#9-bảng-edge-case-tổng-hợp)
 - Việc: test tích hợp (`@SpringBootTest` + MockMvc + Testcontainers PostgreSQL) theo kịch bản: login/refresh/logout (kể cả refresh song song), 3 role → tạo HIGH → alert ADMIN → auto-assign → đổi status hợp lệ → request chưa gán/transition sai/version cũ 409 → history → stats. Cover các edge case ở §9.
 - DoD: toàn bộ test xanh trong CI; các case 401/403/404/409/422 đều được kiểm.
+- Bằng chứng: `AuthMemberIT`, `RequestWorkflowIT`, `FoundationIT` và `DemoSeedIT` cover
+  token rotation đồng thời, request scope 3 role, filter/paging, workflow/history/alert/stats,
+  OpenAPI/Flyway và đầy đủ 401/403/404/409/422.
 
 ### [ ] T-4.3 — Hoàn thiện GitHub Actions CI
 - Owner: D   Depends on: T-0.3   Ước lượng: 15′
