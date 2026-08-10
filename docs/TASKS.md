@@ -354,11 +354,15 @@
   confidence/reason và chỉ điền gợi ý để người dùng sửa/xác nhận. Contract test kiểm body;
   full-stack smoke qua Nginx proxy đã chạy AI gợi ý → tạo → request xuất hiện trong list.
 
-### [ ] T-5.6 — AlertBell + AlertListPage
+### [x] T-5.6 — AlertBell + AlertListPage
 - Owner: FE   Depends on: T-5.2, T-2.D2   Ước lượng: 30′
 - Refs: [FRONTEND.md §10](./FRONTEND.md#10-đặc-tả-từng-trang)
 - Việc: `AlertBell` header (Badge đếm chưa đọc, poll ~15s / refetch sau mutation), popover danh sách, click → mark read + đi tới request.
 - DoD: chuông hiển thị số alert chưa đọc; click đánh dấu đọc → badge giảm; điều hướng đúng request.
+- Bằng chứng FE: `AlertBell` poll 15 giây, badge tính unread và popover hiển thị 5 alert
+  mới nhất; `/alerts` có filter all/unread/read. Click alert chưa đọc gọi PATCH, invalidate
+  mọi alert query rồi deep-link request. Contract test kiểm query/path; full-stack smoke đã
+  chạy tạo HIGH request → ADMIN nhận unread → mark-read → biến mất khỏi unread list.
 
 ### [ ] T-5.7 — StatsDashboardPage (charts)
 - Owner: FE   Depends on: T-5.2, T-3.3   Ước lượng: 30′

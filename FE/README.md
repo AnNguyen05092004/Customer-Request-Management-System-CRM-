@@ -107,6 +107,7 @@ Page không gọi Axios trực tiếp: `Page → query hook → API function →
 - Request detail đã nối assign/status/history/AI summary; mọi workflow mutation gửi
   `expectedVersion` từ response mới nhất và invalidate cache liên quan.
 - Request create đã nối AI category/priority suggestion và được giới hạn cho CLIENT.
+- Alert bell và `/alerts` đã nối polling, filter, mark-read và request deep-link.
 - Member D thêm Alert/LLM features và query invalidation liên quan.
 - Mọi API/type change phải bám `docs/openapi.yaml` và có test trong cùng PR.
 

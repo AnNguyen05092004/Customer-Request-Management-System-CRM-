@@ -327,8 +327,9 @@ bám contract đã được xác nhận.
   <Route element={<ProtectedRoute />}>
     <Route element={<AppLayout />}>
       <Route index element={<Navigate to="/requests" />} />
-      <Route path="/requests" element={<RequestListPage />} />
-      <Route path="/requests/:id" element={<RequestDetailPage />} />
+            <Route path="/requests" element={<RequestListPage />} />
+            <Route path="/requests/:id" element={<RequestDetailPage />} />
+            <Route path="/alerts" element={<AlertListPage />} />
       <Route element={<RoleRoute allow={['CLIENT']} />}>
         <Route path="/requests/new" element={<RequestCreatePage />} />
       </Route>
@@ -386,7 +387,12 @@ Form email + password → `login()`. Thành công → điều hướng `/request
 - Table member; RegisterPage công khai để tạo member (test đủ role cho demo).
 
 ### AlertBell / AlertListPage
-- `AlertBell` ở header: `Badge` đếm alert `isRead=false` (poll `GET /alerts?isRead=false` mỗi ~15s hoặc refetch sau mutation). Popover liệt kê alert; click → đánh dấu đọc (`PATCH /{id}/read`) + điều hướng tới request liên quan.
+- `AlertBell` ở header: poll `GET /alerts` mỗi ~15s, đếm item `isRead=false` cho `Badge`
+  và dùng cùng response cho popover để tránh hai request polling trùng nhau. Click → đánh dấu
+  đọc (`PATCH /{id}/read`) + điều hướng tới request liên quan.
+- Implementation dùng một query list được poll 15 giây cho badge và 5 item mới nhất trong
+  popover; trang `/alerts` có filter all/unread/read. Mark-read invalidate prefix
+  `['alerts']`, nên badge, popover và list đồng bộ ngay.
 
 ## 11. Xử lý lỗi & thông báo
 

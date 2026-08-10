@@ -6,6 +6,7 @@ import { useAuth } from '../auth/useAuth';
 import { AppLayout } from './AppLayout';
 
 vi.mock('../auth/useAuth', () => ({ useAuth: vi.fn() }));
+vi.mock('../features/alerts/AlertBell', () => ({ AlertBell: () => <button type="button">Alerts</button> }));
 
 const logout = vi.fn<() => Promise<void>>();
 
