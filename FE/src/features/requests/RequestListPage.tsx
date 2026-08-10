@@ -149,7 +149,7 @@ export function RequestListPage() {
       {env.isRequestDemoMode ? (
         <div className="demo-banner" role="status">
           <Tag color="gold">Demo data</Tag>
-          Request read APIs are not merged yet. Filters, pagination and details use deterministic OpenAPI-shaped data.
+          Explicit demo mode is enabled. Filters, pagination and details use deterministic OpenAPI-shaped data.
         </div>
       ) : null}
 

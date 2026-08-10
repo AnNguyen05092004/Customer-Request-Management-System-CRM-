@@ -259,10 +259,11 @@
 ### [ ] T-4.3 — Hoàn thiện GitHub Actions CI
 - Owner: D   Depends on: T-0.3   Ước lượng: 15′
 - Refs: [GIT_WORKFLOW.md §5](./GIT_WORKFLOW.md#5-github-actions-ci)
-- Việc: duy trì `backend-ci.yml` chạy Maven verify và `frontend-ci.yml` chạy npm verify
-  trên PR/push vào `develop`/`main`; GitHub-hosted runner dùng Docker cho Testcontainers
-  PostgreSQL. Gắn cả hai required status check vào branch protection.
-- DoD: mở PR → `Backend verify` và `Frontend verify` đều chạy; PR fail một
+- Việc: duy trì `backend-ci.yml` chạy Maven verify, full-stack Docker smoke và
+  `frontend-ci.yml` chạy npm verify trên PR/push vào `develop`/`main`; GitHub-hosted
+  runner dùng Docker cho Testcontainers PostgreSQL và Compose smoke test. Gắn cả ba
+  required status check vào branch protection.
+- DoD: mở PR → `Backend verify`, `Frontend verify` và `Full-stack Docker smoke` đều chạy; PR fail một
   quality gate không merge được; badge CI xanh trên README.
 
 ### [ ] T-4.4 — Endpoint/lệnh reset demo

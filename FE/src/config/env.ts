@@ -4,7 +4,7 @@ function normalizeBaseUrl(value: string): string {
   return value.replace(/\/+$/, '');
 }
 
-const requestDataMode = import.meta.env.VITE_REQUEST_DATA_MODE ?? 'demo';
+const requestDataMode = import.meta.env.VITE_REQUEST_DATA_MODE ?? 'api';
 
 if (requestDataMode !== 'demo' && requestDataMode !== 'api') {
   throw new Error('VITE_REQUEST_DATA_MODE must be either "demo" or "api"');

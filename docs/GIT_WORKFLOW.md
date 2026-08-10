@@ -85,8 +85,8 @@ Format: `type: mô tả ngắn (tiếng Anh hoặc Việt, thì hiện tại)`
 Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và** `develop`:
 - ☑ Require a pull request before merging
 - ☑ Require approvals: **1**
-- ☑ Require status checks to pass (chọn `Backend verify` và `Frontend verify` từ
-  GitHub Actions)
+- ☑ Require status checks to pass (chọn `Backend verify`, `Frontend verify` và
+  `Full-stack Docker smoke` từ GitHub Actions)
 - ☑ Do not allow bypassing the above settings
 - ☑ Restrict who can push (không ai push trực tiếp)
 
@@ -97,7 +97,8 @@ Cấu hình trên GitHub (`Settings → Branches → Add rule`) cho `main` **và
 Hai workflow chạy trên **mỗi PR/push** vào `develop`/`main`:
 
 - `.github/workflows/backend-ci.yml` → status check `Backend verify`, chạy
-  `BE/./mvnw -B verify`;
+  `BE/./mvnw -B verify`, sau đó check `Full-stack Docker smoke` build và khởi động
+  PostgreSQL + backend + frontend bằng Compose;
 - `.github/workflows/frontend-ci.yml` → status check `Frontend verify`, chạy
   `npm ci` và `npm run verify` trong `FE/`.
 
@@ -127,7 +128,7 @@ jobs:
         run: ./mvnw -B verify
 ```
 
-> Unit test không cần DB; integration test dùng **Testcontainers PostgreSQL** nên GitHub Actions phải có Docker (ubuntu-latest đáp ứng). Nhờ vậy Flyway, PostgreSQL SQL và transaction được kiểm chứng trên đúng dialect production, không có false confidence do H2. PR fail test hiện **đỏ** ngay → không merge được.
+> Unit test không cần DB; integration test dùng **Testcontainers PostgreSQL** nên GitHub Actions phải có Docker (ubuntu-latest đáp ứng). Nhờ vậy Flyway, PostgreSQL SQL và transaction được kiểm chứng trên đúng dialect production, không có false confidence do H2. Docker smoke còn bắt các lỗi đóng gói dependency, biến môi trường, healthcheck và reverse proxy mà Maven test riêng lẻ không phát hiện. PR fail một trong ba check sẽ **đỏ** và không được merge.
 
 ## 6. PR template
 

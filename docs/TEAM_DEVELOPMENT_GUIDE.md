@@ -334,7 +334,7 @@ Tạo PR từ `feature/*` vào `develop`, không vào `main`. PR phải:
 - mô tả thay đổi và cách test;
 - nêu rõ migration/contract/shared file đã đổi;
 - có ít nhất một reviewer không phải author;
-- chờ cả **`Backend verify`** và **`Frontend verify`** xanh;
+- chờ **`Backend verify`**, **`Frontend verify`** và **`Full-stack Docker smoke`** xanh;
 - xử lý hết review comment trước khi merge.
 
 Sau khi merge, có thể xóa feature branch. Bản cuối chỉ được đưa từ `develop` vào `main`
@@ -351,7 +351,7 @@ bằng release PR sau khi toàn bộ flow tích hợp và CI xanh.
 - [ ] Migration append-only, version không trùng và đã test trên PostgreSQL.
 - [ ] Không có secret, `.env`, token/password raw hoặc file IDE trong diff.
 - [ ] `git diff --check` sạch và `cd BE && ./mvnw -B verify` xanh.
-- [ ] PR vào `develop`, có reviewer và chờ `Backend verify` cùng `Frontend verify` xanh.
+- [ ] PR vào `develop`, có reviewer và chờ cả ba CI check xanh.
 
 ## 9. Khi bị vướng
 

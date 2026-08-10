@@ -27,6 +27,8 @@ services:
       DB_USERNAME: ${POSTGRES_USER:-bzcom}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-bzcom_local_password}
       JWT_SECRET: ${JWT_SECRET:-local-docker-secret-change-before-production-123456}
+      LLM_ENABLED: ${LLM_ENABLED:-false}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     ports:
       - "${BACKEND_HOST_PORT:-8080}:8080"
     depends_on:
@@ -45,7 +47,7 @@ services:
       context: ./FE
       args:
         VITE_API_BASE_URL: /api
-        VITE_REQUEST_DATA_MODE: ${VITE_REQUEST_DATA_MODE:-demo}
+        VITE_REQUEST_DATA_MODE: ${VITE_REQUEST_DATA_MODE:-api}
     ports:
       - "${FRONTEND_HOST_PORT:-5173}:80"
     depends_on:

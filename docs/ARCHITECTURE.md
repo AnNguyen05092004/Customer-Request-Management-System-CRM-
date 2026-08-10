@@ -243,8 +243,8 @@ DB_USERNAME=bzcom
 DB_PASSWORD=<secret>
 POSTGRES_HOST_PORT=5433     # cổng DB publish ra host; nội bộ Compose vẫn là 5432
 JWT_SECRET=<chuỗi bí mật đủ dài>
-LLM_ENABLED=false            # biến sẽ map vào llm.enabled khi tích hợp LLM
-OPENAI_API_KEY=              # chỉ cần khi LLM_ENABLED=true
+LLM_ENABLED=false            # false dùng mock deterministic; true gọi Gemini
+GEMINI_API_KEY=              # bắt buộc khi LLM_ENABLED=true; không commit key thật
 ```
 > Secret **không commit** vào repo; `application.yml` đọc qua `${ENV}`.
 

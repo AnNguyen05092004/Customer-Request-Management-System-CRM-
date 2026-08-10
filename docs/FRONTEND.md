@@ -103,9 +103,9 @@ FE/
         └── format.ts         # format ngày, enum → nhãn tiếng Việt
 ```
 
-Request API có hai mode rõ ràng: `VITE_REQUEST_DATA_MODE=demo` dùng dữ liệu deterministic
-trong khi backend chưa merge và luôn hiện nhãn **Demo data**; `api` gọi backend thật. Không
-fallback âm thầm từ API sang mock vì điều đó có thể che lỗi contract.
+Request API có hai mode rõ ràng: `VITE_REQUEST_DATA_MODE=api` là mặc định và gọi backend thật;
+`demo` chỉ bật rõ ràng khi phát triển UI cô lập, dùng dữ liệu deterministic và luôn hiện nhãn
+**Demo data**. Không fallback âm thầm từ API sang mock vì điều đó có thể che lỗi contract.
 
 ## 4. Kiến trúc tầng FE
 
@@ -315,9 +315,9 @@ export const useUpdateStatus = (id: number) => {
 
 ## 9. Routing & bản đồ trang
 
-Đây là bản đồ route **đã triển khai trong foundation hiện tại**. Các route create request,
-workflow, alerts và statistics chỉ bổ sung sau khi feature backend tương ứng merge và contract
-được xác nhận.
+Đây là bản đồ route **đã triển khai trong foundation hiện tại**. Request read APIs đã được nối;
+các UI create request, workflow mutation, alerts và statistics vẫn là phần FE tiếp theo và phải
+bám contract đã được xác nhận.
 
 ```typescript
 // App.tsx
@@ -394,7 +394,7 @@ Form email + password → `login()`. Thành công → điều hướng `/request
 `.env.example`:
 ```
 VITE_API_BASE_URL=http://localhost:8080/api
-VITE_REQUEST_DATA_MODE=demo
+VITE_REQUEST_DATA_MODE=api
 ```
 
 Chạy dev:
@@ -410,7 +410,8 @@ Quality gate local/CI:
 npm run verify         # lint + typecheck + unit/component test + production build
 ```
 
-**CORS:** backend cần cho phép origin `http://localhost:5173` (dev) — thêm `CorsConfig` ở Spring (allow `localhost:5173`, methods GET/POST/PATCH/DELETE, header Authorization). Ghi chú này gửi cho member A (config).
+**CORS:** backend hiện đã cho phép origin `http://localhost:5173` (dev), các method
+GET/POST/PATCH/DELETE và header `Authorization` trong `SecurityConfig`.
 
 **Dockerfile (multi-stage → Nginx):** build-time dùng `VITE_API_BASE_URL=/api`; Nginx phục
 vụ SPA và reverse proxy `/api` tới service `backend`, nên bản Docker dùng same-origin và
@@ -423,7 +424,7 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 ARG VITE_API_BASE_URL=/api
-ARG VITE_REQUEST_DATA_MODE=demo
+ARG VITE_REQUEST_DATA_MODE=api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 ENV VITE_REQUEST_DATA_MODE=${VITE_REQUEST_DATA_MODE}
 RUN npm run build
@@ -441,13 +442,13 @@ COPY --from=build /app/dist /usr/share/nginx/html
       context: ./FE
       args:
         VITE_API_BASE_URL: /api
-        VITE_REQUEST_DATA_MODE: ${VITE_REQUEST_DATA_MODE:-demo}
+        VITE_REQUEST_DATA_MODE: ${VITE_REQUEST_DATA_MODE:-api}
     ports: ["5173:80"]
     depends_on:
       backend:
         condition: service_healthy
 ```
-→ `docker compose up --build` chạy cả 3: frontend + app + db. Demo một lệnh.
+→ `docker compose up --build` chạy cả 3: frontend + app + db và FE gọi API thật theo mặc định.
 
 ## 13. Phân công & thứ tự làm
 

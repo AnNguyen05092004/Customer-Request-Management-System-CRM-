@@ -1,5 +1,19 @@
-import { describe, expect, it } from 'vitest';
-import { fetchRequest, fetchRequests } from './api';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import type * as RequestApi from './api';
+
+let fetchRequest: typeof RequestApi.fetchRequest;
+let fetchRequests: typeof RequestApi.fetchRequests;
+
+beforeAll(async () => {
+  vi.stubEnv('VITE_REQUEST_DATA_MODE', 'demo');
+  vi.resetModules();
+  ({ fetchRequest, fetchRequests } = await import('./api'));
+});
+
+afterAll(() => {
+  vi.unstubAllEnvs();
+  vi.resetModules();
+});
 
 describe('request demo adapter', () => {
   it('applies contract filters and pagination', async () => {

@@ -163,6 +163,8 @@ llm:
 ```
 
 - **API key qua biến môi trường**, không hardcode, không commit (`.env` trong `.gitignore`).
+- `LLM_ENABLED=true` yêu cầu `GEMINI_API_KEY` và model không rỗng; ứng dụng fail-fast khi cấu
+  hình thiếu để tránh deployment âm thầm chạy sai.
 - **Timeout** 5s → LLM chậm không treo request (rơi vào fallback).
 - Không gửi dữ liệu nhạy cảm/cá nhân ra LLM (chỉ description yêu cầu; đây cũng là scope control).
 - Chọn model nhỏ (gemini-2.5-flash) → rẻ/miễn phí ở mức demo, nhanh, đủ chính xác cho bài phân loại 3 nhãn.
