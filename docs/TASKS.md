@@ -59,11 +59,14 @@
 - Việc: review toàn bộ endpoint + request/response mẫu + bảng HTTP status. Import `openapi.yaml` vào Postman tạo collection dùng chung.
 - DoD: Postman collection được share; mọi người đồng ý contract (path, method, body, status). Đây là "hợp đồng" — sau này lệch phải sửa qua PR.
 
-### [ ] T-0.3 — Tạo GitHub repo + branch + protection
+### [x] T-0.3 — Tạo GitHub repo + branch + protection
 - Owner: D   Depends on: —   Ước lượng: 15′
 - Refs: [GIT_WORKFLOW.md](./GIT_WORKFLOW.md)
-- Việc: tạo repo; tạo `main` + `develop`; bật branch protection cho cả hai (require PR + 1 approval + status check); thêm `.gitignore` (Java, Node, `.env`), `pull_request_template.md`.
+- Việc: tạo repo; tạo `main` + `develop`; bật branch protection cho cả hai (require PR + 1 approval + ba required status checks); thêm `.gitignore` (Java, Node, `.env`), `pull_request_template.md`.
 - DoD: không ai push thẳng được vào `main`/`develop` (thử push trực tiếp bị chặn); template PR hiện khi mở PR.
+- Bằng chứng: GitHub branch protection của `main` và `develop` yêu cầu PR, 1 approval,
+  conversation resolution và ba strict checks `Backend verify`, `Frontend verify`,
+  `Full-stack Docker smoke`; rule áp dụng cả administrator, không cho force-push/xóa branch.
 
 ### [ ] T-0.4 — Chốt cấu trúc package & quy ước
 - Owner: ALL (A dẫn)   Depends on: —   Ước lượng: 15′
@@ -271,7 +274,7 @@
   token rotation đồng thời, request scope 3 role, filter/paging, workflow/history/alert/stats,
   OpenAPI/Flyway và đầy đủ 401/403/404/409/422.
 
-### [ ] T-4.3 — Hoàn thiện GitHub Actions CI
+### [x] T-4.3 — Hoàn thiện GitHub Actions CI
 - Owner: D   Depends on: T-0.3   Ước lượng: 15′
 - Refs: [GIT_WORKFLOW.md §5](./GIT_WORKFLOW.md#5-github-actions-ci)
 - Việc: duy trì `backend-ci.yml` chạy Maven verify, full-stack Docker smoke và
@@ -280,8 +283,8 @@
   required status check vào branch protection.
 - DoD: mở PR → `Backend verify`, `Frontend verify` và `Full-stack Docker smoke` đều chạy; PR fail một
   quality gate không merge được; badge CI xanh trên README.
-- Trạng thái: cả ba check đã xanh trên PR #13; còn thao tác GitHub thủ công là thêm
-  `Full-stack Docker smoke` vào required checks của `main` và `develop` (và xác nhận badge nếu dùng).
+- Bằng chứng: cả ba check đã xanh trên PR #13, #15 và #16; branch protection của
+  `main`/`develop` đã yêu cầu đủ ba strict checks và README hiển thị badge theo nhánh `develop`.
 
 ### [ ] T-4.4 — Endpoint/lệnh reset demo
 - Owner: A   Depends on: T-1.10   Ước lượng: 10′

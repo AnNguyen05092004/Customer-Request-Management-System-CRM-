@@ -1,5 +1,8 @@
 # Bzcom CRM — Customer Request Management System
 
+[![Backend CI](https://github.com/AnNguyen05092004/Customer-Request-Management-System-CRM-/actions/workflows/backend-ci.yml/badge.svg?branch=develop)](https://github.com/AnNguyen05092004/Customer-Request-Management-System-CRM-/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/AnNguyen05092004/Customer-Request-Management-System-CRM-/actions/workflows/frontend-ci.yml/badge.svg?branch=develop)](https://github.com/AnNguyen05092004/Customer-Request-Management-System-CRM-/actions/workflows/frontend-ci.yml)
+
 > Backend REST API quản lý yêu cầu khách hàng (bug / feature / inquiry) cho **Bzcom** — công ty vận hành & bảo trì web service cho các khách hàng Hàn Quốc.
 >
 > **Bài tập OJT 2026 KITS Hanoi — SW Developer Track.** Nhóm 4 người.
